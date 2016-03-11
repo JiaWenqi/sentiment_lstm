@@ -2,8 +2,7 @@ import tensorflow as tf
 
 
 class LSTMCell(object):
-  """
-  http://colah.github.io/posts/2015-08-Understanding-LSTMs/
+  """http://colah.github.io/posts/2015-08-Understanding-LSTMs/
   """
 
   def __init__(self, input_width, prev_h, W_forget, b_forget, W_input, b_input,
@@ -21,6 +20,9 @@ class LSTMCell(object):
     self.input = tf.placeholder(dtype=tf.int32,
                                 shape=(input_width),
                                 name='input')
+    self.label = tf.placeholder(dtype=tf.int32,
+                                shape=(input_width),
+                                name='label')
     prev_h_and_w = tf.concat(1, [prev_h, self.input])
 
     forget_gate = tf.sigmoid(tf.matmul(W_forget, prev_h_and_w) + b_forget)
@@ -42,6 +44,9 @@ class LSTMCell(object):
   def Inference(self):
     return self.h
 
+  def Loss(self):
+    return
+
 
 class LSTM(object):
 
@@ -61,19 +66,18 @@ class LSTM(object):
     W_output = tf.Variable(tf.random_normal(W_shape))
     b_output = tf.Variable(tf.random_normal(b_shape))
 
+    cell_list = []
     cell = LSTMCell(input_width, prev_h, W_forget, b_forget, W_input, b_input,
                     W_C, b_C, C_prev, W_output, b_output)
 
-    self.inference_list = []
-    self.inference_list.append(cell.Inference())
-
-    self.feed_list = []
-    self.feed_list.append(cell.input)
+    cell_list.append(cell)
 
     for i in range(1, length):
       cell = cell.Stack()
-      self.inference_list.append(cell.Inference())
-      self.feed_list.append(cell.input)
+      cell_list.append(cell)
 
   def Inference(self):
-    pass
+    return [cell.Inference() for cell in cell_list]
+
+  def Loss(self):
+    return
