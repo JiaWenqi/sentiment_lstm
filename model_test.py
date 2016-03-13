@@ -9,18 +9,19 @@ class TestLSTM(unittest.TestCase):
 
   def __init__(self, *args, **kwargs):
     super(TestLSTM, self).__init__(*args, **kwargs)
+    self.learning_rate = 0.001
 
-  def test_Trivial(self):
+  def tearDown(self):
     with tf.Graph().as_default():
-      lstm = model.LSTM(length=3, batch_size=1, input_dim=1, output_dim=1)
+      lstm = model.LSTM(length=len(self.x),
+                        batch_size=len(self.x[0]),
+                        input_dim=len(self.x[0][0]),
+                        output_dim=len(self.label[0]))
       loss = lstm.loss
-      train_op = lstm.Train(loss, learning_rate=0.001)
+      train_op = lstm.Train(loss, learning_rate=self.learning_rate)
 
-      x = [[[1]], [[2]], [[3]]]
-      label = [[1]]
-
-      feed_dict_x = list(zip(lstm.inputs, x))
-      feed_dict_label = {lstm.label_placeholder: label}
+      feed_dict_x = list(zip(lstm.inputs, self.x))
+      feed_dict_label = {lstm.label_placeholder: self.label}
 
       feed_dict = {}
       feed_dict.update(feed_dict_x)
@@ -31,4 +32,21 @@ class TestLSTM(unittest.TestCase):
         init = tf.initialize_all_variables()
         sess.run(init)
 
-        _, loss_value = sess.run([train_op, loss], feed_dict=feed_dict)
+        for i in range(10):
+          _, loss_value = sess.run([train_op, loss], feed_dict=feed_dict)
+
+  def test_1D(self):
+    self.x = [[[1]], [[2]], [[3]]]
+    self.label = [[1]]
+
+  def test_3D(self):
+    self.x = [[[1, 0, 0]], [[0, 1, 0]], [[0, 0, 1]]]
+    self.label = [[1, 0, 0, 0, 0]]
+
+  def test_3D_longer_sequence(self):
+    self.x = [[[1, 0, 0]], [[0, 1, 0]], [[0, 0, 1]], [[0, 1, 1]]]
+    self.label = [[1, 0, 0, 0, 0]]
+
+
+if __name__ == '__main__':
+  unittest.main()
