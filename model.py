@@ -2,82 +2,155 @@ import tensorflow as tf
 
 
 class LSTMCell(object):
-  """http://colah.github.io/posts/2015-08-Understanding-LSTMs/
-  """
+  """A single LSTM cell."""
 
-  def __init__(self, input_width, prev_h, W_forget, b_forget, W_input, b_input,
-               W_C, b_C, C_prev, W_output, b_output):
-    self.input_width = input_width
-    self.W_forget = W_forget
-    self.b_forget = b_forget
-    self.W_input = W_input
-    self.b_input = b_input
+  def __init__(self, batch_size, input_dim, h_prev, C_prev, W_f, b_f, W_i, b_i,
+               W_C, b_C, W_o, b_o):
+    self.batch_size = batch_size
+    self.input_dim = input_dim
+    self.h_prev = h_prev
+    self.C_prev = C_prev
+    self.W_f = W_f
+    self.b_f = b_f
+    self.W_i = W_i
+    self.b_i = b_i
     self.W_C = W_C
     self.b_C = b_C
-    self.W_output = W_output
-    self.b_output = b_output
+    self.W_o = W_o
+    self.b_o = b_o
 
-    self.input = tf.placeholder(dtype=tf.int32,
-                                shape=(input_width),
-                                name='input')
-    self.label = tf.placeholder(dtype=tf.int32,
-                                shape=(input_width),
-                                name='label')
-    prev_h_and_w = tf.concat(1, [prev_h, self.input])
+    self.x_placeholder = tf.placeholder(tf.float32,
+                                        shape=[self.batch_size, self.input_dim])
 
-    forget_gate = tf.sigmoid(tf.matmul(W_forget, prev_h_and_w) + b_forget)
+    # forget gate
+    concat_input = tf.concat(1, [self.h_prev, self.x_placeholder])
+    f = tf.sigmoid(tf.matmul(concat_input, self.W_f) + self.b_f)
 
-    input_gate = tf.sigmoid(tf.matmul(W_input, prev_h_and_w) + b_input)
+    # input gate
+    i = tf.sigmoid(tf.matmul(concat_input, self.W_i) + self.b_i)
 
-    C_tilt_t = tf.tanh(tf.matmul(W_C, prev_h_and_w) + b_C)
+    # cell update
+    C_update = tf.tanh(tf.matmul(concat_input, self.W_C) + self.b_C)
 
-    self.C_t = forget_gate * C_prev + input_gate * C_tilt_t
+    # cell after update
+    self.C = tf.mul(f, self.C_prev) + tf.mul(i, C_update)
 
-    output_gate = tf.sigmoid(tf.matmul(W_output, prev_h_and_w) + b_output)
-    self.h = output_gate * tf.tanh(self.C_t)
+    # output gate
+    o = tf.sigmoid(tf.matmul(concat_input, self.W_o) + self.b_o)
 
-  def Stack(self):
-    return LSTMCell(self.input_width, self.h, self.W_forget, self.b_forget,
-                    self.W_input, self.b_input, self.W_C, self.b_C, self.C_t,
-                    self.W_output, self.b_output)
+    # output
+    self.h = tf.mul(o, tf.tanh(self.C))
 
-  def Inference(self):
-    return self.h
-
-  def Loss(self):
-    return
+  def Next(self):
+    return LSTMCell(batch_size=self.batch_size,
+                    input_dim=self.input_dim,
+                    h_prev=self.h,
+                    C_prev=self.C,
+                    W_f=self.W_f,
+                    b_f=self.b_f,
+                    W_i=self.W_i,
+                    b_i=self.b_i,
+                    W_C=self.W_C,
+                    b_C=self.b_C,
+                    W_o=self.W_o,
+                    b_o=self.b_o)
 
 
 class LSTM(object):
+  """A composite LSTM made of LSTM cells."""
 
-  def __init__(self, length, input_width, h_width):
+  def __init__(self, length, batch_size, input_dim, output_dim):
     self.length = length
+    self.batch_size = batch_size
+    self.input_dim = input_dim
+    self.output_dim = output_dim
 
-    W_shape = [input_width + h_width, 1]
-    b_shape = [1, 1]
-    prev_h = tf.Variable(tf.random_normal([1, h_width]))
-    W_forget = tf.Variable(tf.random_normal(W_shape))
-    b_forget = tf.Variable(tf.random_normal(b_shape))
-    W_input = tf.Variable(tf.random_normal(W_shape))
-    b_forget = tf.Variable(tf.random_normal(b_shape))
-    W_C = tf.Variable(tf.random_normal(W_shape))
-    b_C = tf.Variable(tf.random_normal(b_shape))
-    C_prev = tf.Variable(tf.random_normal([1, h_width]))
-    W_output = tf.Variable(tf.random_normal(W_shape))
-    b_output = tf.Variable(tf.random_normal(b_shape))
+    self.label_placeholder = tf.placeholder(
+        tf.float32,
+        shape=[self.batch_size, self.output_dim],
+        name='label')
+    h_init = tf.Variable(
+        tf.truncated_normal([self.batch_size, self.output_dim]),
+        name='h_t-1')
+    C_init = tf.Variable(
+        tf.truncated_normal([self.batch_size, self.output_dim]),
+        name='C_prev')
+    W_f = tf.Variable(
+        tf.truncated_normal([self.output_dim + self.input_dim, self.output_dim
+                            ]),
+        name='W_f')
+    b_f = tf.Variable(
+        tf.truncated_normal([self.batch_size, self.output_dim]),
+        name='b_f')
+    W_i = tf.Variable(
+        tf.truncated_normal([self.output_dim + self.input_dim, self.output_dim
+                            ]),
+        name='W_i')
+    b_i = tf.Variable(
+        tf.truncated_normal([self.batch_size, self.output_dim]),
+        name='b_i')
+    W_C = tf.Variable(
+        tf.truncated_normal([self.output_dim + self.input_dim, self.output_dim
+                            ]),
+        name='W_C')
+    b_C = tf.Variable(
+        tf.truncated_normal([self.batch_size, self.output_dim]),
+        name='b_C')
+    W_o = tf.Variable(
+        tf.truncated_normal([self.output_dim + self.input_dim, self.output_dim
+                            ]),
+        name='W_o')
+    b_o = tf.Variable(
+        tf.truncated_normal([self.batch_size, self.output_dim]),
+        name='b_o')
 
-    cell_list = []
-    cell = LSTMCell(input_width, prev_h, W_forget, b_forget, W_input, b_input,
-                    W_C, b_C, C_prev, W_output, b_output)
+    self.cell_list = []
+    cell = LSTMCell(batch_size=self.batch_size,
+                    input_dim=self.input_dim,
+                    h_prev=h_init,
+                    C_prev=C_init,
+                    W_f=W_f,
+                    b_f=b_f,
+                    W_i=W_i,
+                    b_i=b_i,
+                    W_C=W_C,
+                    b_C=b_C,
+                    W_o=W_o,
+                    b_o=b_o)
 
-    cell_list.append(cell)
+    self.cell_list.append(cell)
 
-    for i in range(1, length):
-      cell = cell.Stack()
-      cell_list.append(cell)
+    for i in range(1, self.length):
+      cell = cell.Next()
+      self.cell_list.append(cell)
 
-  def Inference(self):
-    return [cell.Inference() for cell in cell_list]
+    self.final_cell = self.cell_list[-1]
 
-  def Loss(self):
-    return
+  @property
+  def inference(self):
+    return self.final_cell.h
+
+  @property
+  def loss(self):
+    # x-y
+    diff = self.inference - self.label_placeholder
+    # (x-y)^2
+    diff_pow = tf.pow(diff, 2)
+    # Sigma((x-y)^2) for each run
+    diff_pow_batch = tf.reduce_sum(diff_pow, 1)
+    # sqrt(sigma(..)) for each run
+    euclidean_distance = tf.sqrt(diff_pow_batch)
+    # mean for the whole batch
+    return tf.reduce_mean(euclidean_distance)
+
+  def Train(self, loss, learning_rate):
+    tf.scalar_summary(loss.op.name, loss)
+    optimizer = tf.train.GradientDescentOptimizer(learning_rate)
+    global_step = tf.Variable(0, name='global_step', trainable=False)
+    train_op = optimizer.minimize(loss, global_step=global_step)
+
+    return train_op
+
+  @property
+  def inputs(self):
+    return [cell.x_placeholder for cell in self.cell_list]
