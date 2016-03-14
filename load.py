@@ -13,7 +13,7 @@ def NextMiniBatch(x, labels, idx, batch_size):
   if (idx + 1) * batch_size > x.shape[0] or idx < 0:
     return None, None
   return x[idx * batch_size:(idx + 1) * batch_size, :], labels[
-      idx * batch_size:(idx + 1) * batch_size]
+      idx * batch_size:(idx + 1) * batch_size, :]
 
 
 def prepare_data(seqs, labels, maxlen=None):
@@ -49,11 +49,17 @@ def prepare_data(seqs, labels, maxlen=None):
   n_samples = len(seqs)
   maxlen = numpy.max(lengths)
 
+  label_dim = 1 if isinstance(labels[0], int) else len(labels[0])
+
   x = numpy.zeros((n_samples, maxlen)).astype('float32')
+  labels_arr = numpy.zeros((n_samples, label_dim)).astype('float32')
   for idx, s in enumerate(seqs):
     x[idx, :lengths[idx]] = s
 
-  return x, labels
+  for idx, l in enumerate(labels):
+    labels_arr[idx, :] = l
+
+  return x, labels_arr
 
 
 def get_dataset_file(dataset, default_dataset, origin):

@@ -15,4 +15,6 @@ Implementation of [this tutorial](http://deeplearning.net/tutorial/lstm.html)
 2. Variable length LSTM. (Currently use 0 padding to the max len)
 3. Debug LSTM graph.
 4. Import word2vec
+5. Reset h after each batch to zero
+6. Fix exploding loss and nan loss.
 
