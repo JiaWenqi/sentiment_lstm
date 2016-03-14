@@ -12,7 +12,7 @@ Implementation of [this tutorial](http://deeplearning.net/tutorial/lstm.html)
 
 ## TODO
 1. Training
-2. Variable length LSTM.
+2. Variable length LSTM. (Currently use 0 padding to the max len)
 3. Debug LSTM graph.
 4. Import word2vec
 
