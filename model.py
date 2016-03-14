@@ -4,10 +4,12 @@ import tensorflow as tf
 class LSTMCell(object):
   """A single LSTM cell."""
 
-  def __init__(self, batch_size, input_dim, h_prev, C_prev, W_f, b_f, W_i, b_i,
-               W_C, b_C, W_o, b_o):
+  def __init__(self, idx, batch_size, input_dim, x_placeholder, h_prev, C_prev,
+               W_f, b_f, W_i, b_i, W_C, b_C, W_o, b_o):
+    self.idx = idx
     self.batch_size = batch_size
     self.input_dim = input_dim
+    self.x_placeholder = x_placeholder
     self.h_prev = h_prev
     self.C_prev = C_prev
     self.W_f = W_f
@@ -19,11 +21,11 @@ class LSTMCell(object):
     self.W_o = W_o
     self.b_o = b_o
 
-    self.x_placeholder = tf.placeholder(tf.float32,
-                                        shape=[self.batch_size, self.input_dim])
-
     # forget gate
-    concat_input = tf.concat(1, [self.h_prev, self.x_placeholder])
+    concat_input = tf.concat(1, [
+        self.h_prev,
+        self.x_placeholder[:, idx * self.input_dim:(idx + 1) * self.input_dim]
+    ])
     f = tf.sigmoid(tf.matmul(concat_input, self.W_f) + self.b_f)
 
     # input gate
@@ -42,8 +44,10 @@ class LSTMCell(object):
     self.h = tf.mul(o, tf.tanh(self.C))
 
   def Next(self):
-    return LSTMCell(batch_size=self.batch_size,
+    return LSTMCell(idx=self.idx + 1,
+                    batch_size=self.batch_size,
                     input_dim=self.input_dim,
+                    x_placeholder=self.x_placeholder,
                     h_prev=self.h,
                     C_prev=self.C,
                     W_f=self.W_f,
@@ -65,10 +69,8 @@ class LSTM(object):
     self.input_dim = input_dim
     self.output_dim = output_dim
 
-    self.label_placeholder = tf.placeholder(
-        tf.float32,
-        shape=[self.batch_size, self.output_dim],
-        name='label')
+  def Inference(self, x_placeholder):
+
     h_init = tf.Variable(
         tf.truncated_normal([self.batch_size, self.output_dim]),
         name='h_t-1')
@@ -105,8 +107,10 @@ class LSTM(object):
         name='b_o')
 
     self.cell_list = []
-    cell = LSTMCell(batch_size=self.batch_size,
+    cell = LSTMCell(idx=0,
+                    batch_size=self.batch_size,
                     input_dim=self.input_dim,
+                    x_placeholder=x_placeholder,
                     h_prev=h_init,
                     C_prev=C_init,
                     W_f=W_f,
@@ -126,14 +130,11 @@ class LSTM(object):
 
     self.final_cell = self.cell_list[-1]
 
-  @property
-  def inference(self):
     return self.final_cell.h
 
-  @property
-  def loss(self):
+  def Loss(self, inference, label_placeholder):
     # x-y
-    diff = self.inference - self.label_placeholder
+    diff = inference - label_placeholder
     # (x-y)^2
     diff_pow = tf.pow(diff, 2)
     # Sigma((x-y)^2) for each run
@@ -150,7 +151,3 @@ class LSTM(object):
     train_op = optimizer.minimize(loss, global_step=global_step)
 
     return train_op
-
-  @property
-  def inputs(self):
-    return [cell.x_placeholder for cell in self.cell_list]
