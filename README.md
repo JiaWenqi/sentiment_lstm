@@ -18,6 +18,8 @@ Implementation of _not exactly_ [this tutorial](http://deeplearning.net/tutorial
 5. ~~Reset h after each batch to zero~~
 6. ~~Fix exploding loss and nan loss.~~ (This is due to euclidean sqrt function derivative at 0 is nan, end up adding an eps)
 7. ~~Should at least use one hot vector to represent word, I doubt it is due to the large value that results in derivative to nan.~~ (Change to embedding)
+8. Regularization
+9. Dropout
 
 ## Results
 ### Index based input without embedding, using the last output, euclidean distance loss
@@ -28,4 +30,4 @@ learning rate = 5.0
 batch_size = 100
 length = 150
 
-Achieved 60.94% at epoch 38, still learning.
+Achieved ~62% at epoch ~200. At this point, the precision for training set is ~90%, so apparently there is overfitting.
