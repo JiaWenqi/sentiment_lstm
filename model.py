@@ -1,3 +1,4 @@
+import sys
 import tensorflow as tf
 
 
@@ -43,6 +44,8 @@ class LSTMCell(object):
     # output
     self.h = tf.mul(o, tf.tanh(self.C))
 
+    self.concat_input = concat_input
+
   def Next(self):
     return LSTMCell(idx=self.idx + 1,
                     batch_size=self.batch_size,
@@ -70,13 +73,8 @@ class LSTM(object):
     self.output_dim = output_dim
 
   def Inference(self, x_placeholder):
-
-    h_init = tf.Variable(
-        tf.truncated_normal([self.batch_size, self.output_dim]),
-        name='h_t-1')
-    C_init = tf.Variable(
-        tf.truncated_normal([self.batch_size, self.output_dim]),
-        name='C_prev')
+    h_init = tf.zeros([self.batch_size, self.output_dim], name='h_t-1')
+    C_init = tf.zeros([self.batch_size, self.output_dim], name='C_prev')
     W_f = tf.Variable(
         tf.truncated_normal([self.output_dim + self.input_dim, self.output_dim
                             ]),
@@ -138,11 +136,18 @@ class LSTM(object):
     # (x-y)^2
     diff_pow = tf.pow(diff, 2)
     # Sigma((x-y)^2) for each run
-    diff_pow_batch = tf.reduce_sum(diff_pow, 1)
+    diff_pow_batch = tf.clip_by_value(
+        tf.reduce_sum(diff_pow, 1), 0.0000001, sys.maxint)
     # sqrt(sigma(..)) for each run
     euclidean_distance = tf.sqrt(diff_pow_batch)
     # mean for the whole batch
-    return tf.reduce_mean(euclidean_distance)
+    distance = tf.reduce_mean(euclidean_distance)
+
+    regularizer = tf.contrib.layers.l2_regularizer(0.0001)
+
+    return (distance + regularizer(self.final_cell.W_f) +
+            regularizer(self.final_cell.W_i) + regularizer(self.final_cell.W_C)
+            + regularizer(self.final_cell.W_o))
 
   def Train(self, loss, learning_rate):
     tf.scalar_summary(loss.op.name, loss)
@@ -151,3 +156,16 @@ class LSTM(object):
     train_op = optimizer.minimize(loss, global_step=global_step)
 
     return train_op
+
+  def Evaluate(self, inference, label_placeholder):
+    # x-y
+    diff = inference - label_placeholder
+    # (x-y)^2
+    diff_pow = tf.pow(diff, 2)
+    # Sigma((x-y)^2) for each run
+    diff_pow_batch = tf.reduce_sum(diff_pow, 1)
+    # sqrt(sigma(..)) for each run
+    euclidean_distance = tf.sqrt(diff_pow_batch)
+    bound = tf.fill(tf.shape(euclidean_distance), 0.5)
+    cond = tf.less(euclidean_distance, bound)
+    return tf.reduce_mean(tf.cast(cond, tf.float32))

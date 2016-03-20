@@ -17,4 +17,4 @@ Implementation of [this tutorial](http://deeplearning.net/tutorial/lstm.html)
 4. Import word2vec
 5. Reset h after each batch to zero
 6. Fix exploding loss and nan loss.
-
+7. Should at least use one hot vector to represent word, I doubt it is due to the large value that results in derivative to nan.
