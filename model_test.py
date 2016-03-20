@@ -10,23 +10,23 @@ class TestLSTM(unittest.TestCase):
   def __init__(self, *args, **kwargs):
     super(TestLSTM, self).__init__(*args, **kwargs)
     self.learning_rate = 0.001
+    self.num_class = 2
 
   def tearDown(self):
     with tf.Graph().as_default():
-      x_placeholder = tf.placeholder(
-          tf.float32,
-          shape=[self.batch_size, self.length * self.input_dim],
-          name='label')
+      x_placeholder = tf.placeholder(tf.int32,
+                                     shape=[self.batch_size, self.length],
+                                     name='label')
 
-      label_placeholder = tf.placeholder(
-          tf.float32,
-          shape=[self.batch_size, self.output_dim],
-          name='label')
+      label_placeholder = tf.placeholder(tf.int64,
+                                         shape=[self.batch_size,],
+                                         name='label')
 
       lstm = model.LSTM(length=self.length,
                         batch_size=self.batch_size,
-                        input_dim=self.input_dim,
-                        output_dim=self.output_dim)
+                        voc_size=self.voc_size,
+                        emb_dim=self.emb_dim,
+                        num_class=self.num_class)
       inference = lstm.Inference(x_placeholder)
       loss = lstm.Loss(inference, label_placeholder)
       train_op = lstm.Train(loss, learning_rate=self.learning_rate)
@@ -40,46 +40,21 @@ class TestLSTM(unittest.TestCase):
         for i in range(10):
           _, loss_value = sess.run([train_op, loss], feed_dict=feed_dict)
 
-  def test_1D(self):
+  def test_one_row(self):
     self.length = 3
     self.batch_size = 1
-    self.input_dim = 1
-    self.output_dim = 1
+    self.voc_size = 1000
+    self.emb_dim = 100
     self.x = [[1, 2, 3]]
-    self.label = [[1]]
+    self.label = [1]
 
-  def test_3D(self):
+  def test_multiple_row(self):
     self.length = 3
-    self.batch_size = 1
-    self.input_dim = 3
-    self.output_dim = 5
-    self.x = [[1, 0, 0, 0, 1, 0, 0, 0, 1]]
-    self.label = [[1, 0, 0, 0, 0]]
-
-  def test_3D_longer_sequence(self):
-    self.length = 4
-    self.batch_size = 1
-    self.input_dim = 3
-    self.output_dim = 5
-    self.x = [[1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1]]
-    self.label = [[1, 0, 0, 0, 0]]
-
-  def test_numpy_array(self):
-    self.length = 3
-    self.batch_size = 1
-    self.input_dim = 3
-    self.output_dim = 5
-    self.x = np.array([[1, 0, 0, 0, 1, 0, 0, 0, 1]])
-    self.label = np.array([[1, 0, 0, 0, 0]])
-
-  def test_numpy_array_minibatch(self):
-    self.length = 3
-    self.batch_size = 2
-    self.input_dim = 3
-    self.output_dim = 5
-    self.x = np.array([[1, 0, 0, 0, 1, 0, 0, 0, 1], [1, 1, 0, 1, 1, 0, 1, 0, 1]
-                      ])
-    self.label = np.array([[1, 0, 0, 0, 0], [1, 1, 0, 0, 1]])
+    self.batch_size = 3
+    self.voc_size = 1000
+    self.emb_dim = 100
+    self.x = [[1, 2, 3], [1, 2, 4], [1, 3, 4]]
+    self.label = [1, 0, 1]
 
 
 if __name__ == '__main__':
