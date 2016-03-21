@@ -21,6 +21,9 @@ Implementation of _not exactly_ [this tutorial](http://deeplearning.net/tutorial
 8. Regularization
 9. Dropout
 
+## Open Question
+1. Should we train embedding on the corpse or use pretrained embedding from larger corpse?
+
 ## Results
 ### Index based input without embedding, using the last output, euclidean distance loss
 This is the first experiment setting. length is set to around 100, batch_size around 50, the test result never went higher than 55%. This looks miserable result, considering 50% is coin toss.
