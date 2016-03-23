@@ -178,3 +178,11 @@ def load_data(path="imdb.pkl",
   test = (test_set_x, test_set_y)
 
   return train, valid, test
+
+
+def load_dictionary(path='../data/imdb.dict.pkl'):
+  # TODO(wenjie): download this file from 'http://www.iro.umontreal.ca/~lisa/deep/data/imdb.dict.pkl.gz'
+  f = open(path, 'r')
+  dictionary = pickle.load(f)
+  f.close()
+  return dictionary
