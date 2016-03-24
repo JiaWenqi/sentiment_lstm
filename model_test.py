@@ -11,6 +11,7 @@ class TestLSTM(unittest.TestCase):
     super(TestLSTM, self).__init__(*args, **kwargs)
     self.learning_rate = 0.001
     self.num_class = 2
+    self.pretrained_emb = None
 
   def tearDown(self):
     with tf.Graph().as_default():
@@ -26,7 +27,8 @@ class TestLSTM(unittest.TestCase):
                         batch_size=self.batch_size,
                         voc_size=self.voc_size,
                         emb_dim=self.emb_dim,
-                        num_class=self.num_class)
+                        num_class=self.num_class,
+                        pretrained_emb=self.pretrained_emb)
       inference = lstm.Inference(x_placeholder)
       loss = lstm.Loss(inference, label_placeholder)
       train_op = lstm.Train(loss, learning_rate=self.learning_rate)
@@ -55,6 +57,17 @@ class TestLSTM(unittest.TestCase):
     self.emb_dim = 100
     self.x = [[1, 2, 3], [1, 2, 4], [1, 3, 4]]
     self.label = [1, 0, 1]
+
+  def test_multiple_row(self):
+    self.length = 3
+    self.batch_size = 3
+    self.voc_size = 1000
+    self.emb_dim = 100
+    self.x = [[1, 2, 3], [1, 2, 4], [1, 3, 4]]
+    self.label = [1, 0, 1]
+    self.pretrained_emb = np.zeros(
+        [self.voc_size, self.emb_dim],
+        dtype=np.float32)
 
 
 if __name__ == '__main__':

@@ -68,19 +68,29 @@ class LSTMCell(object):
 class LSTM(object):
   """A composite LSTM made of LSTM cells."""
 
-  def __init__(self, length, batch_size, voc_size, emb_dim, num_class):
+  def __init__(self,
+               length,
+               batch_size,
+               voc_size,
+               emb_dim,
+               num_class,
+               pretrained_emb=None):
     self.length = length
     self.batch_size = batch_size
     self.voc_size = voc_size
     self.emb_dim = emb_dim
     self.num_class = num_class
+    self.pretrained_emb = pretrained_emb
 
   def Inference(self, x_placeholder):
     h_init = tf.zeros([self.batch_size, self.num_class], name='h_t-1')
     C_init = tf.zeros([self.batch_size, self.num_class], name='C_prev')
-    embedding = tf.Variable(
-        tf.truncated_normal([self.voc_size, self.emb_dim]),
-        name='embedding')
+    if self.pretrained_emb is not None:
+      embedding = tf.constant(self.pretrained_emb, name='embedding')
+    else:
+      embedding = tf.Variable(
+          tf.truncated_normal([self.voc_size, self.emb_dim]),
+          name='embedding')
     W_f = tf.Variable(
         tf.truncated_normal([self.num_class + self.emb_dim, self.num_class]),
         name='W_f')
@@ -150,4 +160,4 @@ class LSTM(object):
 
   def Evaluate(self, inference, label_placeholder):
     correct = tf.nn.in_top_k(inference, label_placeholder, 1)
-    return tf.reduce_sum(tf.cast(correct, tf.int32))
+    return tf.reduce_mean(tf.cast(correct, tf.float32))

@@ -1,6 +1,8 @@
-import numpy
+import numpy as np
 import tensorflow as tf
+import six.moves.cPickle as pickle
 
+import os
 import math
 import model
 import load
@@ -14,12 +16,23 @@ def main():
   learning_rate = 5.0
   epochs = 100000
   voc_size = 100000
-  emb_dim = 10
+  emb_dim = 300
+  pretrained_emb_path = '../data/imdb.emb.pkl'
+  checkpoint_path = '../data/lstm.checkpoint'
 
   train, valid, test = load.load_data(n_words=voc_size)
   x, labels = load.prepare_data(train[0], train[1], maxlen=length)
   print('There are %d training cases.' % len(labels))
   test_x, test_labels = load.prepare_data(test[0], test[1], maxlen=length)
+
+  if not os.path.isfile(pretrained_emb_path):
+    print(
+        'pretrained embedding does not exist, fall back to randomly initialized embedding.')
+    pretrained_emb = None
+  else:
+    with open(pretrained_emb_path, 'r') as f:
+      pretrained_emb = pickle.load(f)
+    print('pretrained embedding loaded.')
 
   with tf.Graph().as_default():
     x_placeholder = tf.placeholder(tf.int32,
@@ -34,11 +47,14 @@ def main():
                       batch_size=batch_size,
                       voc_size=voc_size,
                       emb_dim=emb_dim,
-                      num_class=num_class)
+                      num_class=num_class,
+                      pretrained_emb=pretrained_emb)
     inference = lstm.Inference(x_placeholder)
     loss = lstm.Loss(inference, label_placeholder)
     train_op = lstm.Train(loss, learning_rate=learning_rate)
     evaluate = lstm.Evaluate(inference, label_placeholder)
+
+    saver = tf.train.Saver()
 
     with tf.Session() as sess:
       print('initializing all variables.')
@@ -74,9 +90,12 @@ def main():
                                   label_placeholder, evaluate)
 
         print(
-            'Epoch %d: loss = %.5f ; val_evaluation = %.2f ; test_evaluation = %.2f (%.3f sec)'
-            %
-            (epoch, total_loss / i, total_val_eval, total_test_eval, duration))
+            'Epoch %d: loss = %.5f ; val_evaluation = %2.2f ; test_evaluation = %2.2f (%.3f sec)'
+            % (epoch, total_loss / i, total_val_eval * 100.0,
+               total_test_eval * 100.0, duration))
+
+        # Save the model.
+        saver.save(sess, checkpoint_path)
 
 
 def Evaluate(sess, batch_size, batch_x, batch_label, x_placeholder,

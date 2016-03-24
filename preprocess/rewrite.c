@@ -12,6 +12,11 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
+/* This file is modified to do read a text file contain a list words (each word on its */
+/* own line) It also load the pretrained embedding corpse, it finally outputs a file */
+/* with a repeated list of lines of word and embedding values seperated by a single */
+/* space in a text file. */
+
 #include <stdio.h>
 #include <string.h>
 #include <math.h>

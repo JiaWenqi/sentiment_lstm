@@ -1,3 +1,5 @@
+'''Load the imdb dictionary(word: index), and output each word as a line into a text file.'''
+
 import six.moves.cPickle as pickle
 
 
