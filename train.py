@@ -23,7 +23,8 @@ def main():
   voc_size = 100000
   emb_dim = 300
   pretrained_emb_path = '../data/imdb.emb.pkl'
-  checkpoint_path = '../data/lstm.checkpoint'
+  checkpoint_dir = './checkpoint'
+  checkpoint_file = 'lstm'
 
   train, valid, test = load.load_data(n_words=voc_size)
   x, labels = load.prepare_data(train[0], train[1], maxlen=length)
@@ -60,12 +61,12 @@ def main():
     train_op = lstm.Train(loss, learning_rate=learning_rate)
     evaluate = lstm.Evaluate(inference, label_placeholder)
 
-    saver = tf.train.Saver()
+    saver = tf.train.Saver(max_to_keep=10)
 
     with tf.Session() as sess:
       if args.predict:
         print('Calculating prediction precision.')
-        saver.restore(sess, checkpoint_path)
+        saver.restore(sess, tf.train.latest_checkpoint(checkpoint_dir))
         total_test_precision = Evaluate(sess, batch_size, test_x, test_labels,
                                         x_placeholder, label_placeholder,
                                         evaluate)
@@ -112,7 +113,9 @@ def main():
                  total_valid_precision * 100.0, duration))
 
           # Save the model.
-          saver.save(sess, checkpoint_path)
+          saver.save(sess,
+                     os.path.join(checkpoint_dir, checkpoint_file),
+                     global_step=epoch)
 
 
 def Evaluate(sess, batch_size, batch_x, batch_label, x_placeholder,
