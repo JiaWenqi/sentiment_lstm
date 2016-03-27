@@ -10,6 +10,22 @@ Implementation of _not exactly_ [this tutorial](http://deeplearning.net/tutorial
 ## LSTM tutorial
 [A nice tutorial](http://colah.github.io/posts/2015-08-Understanding-LSTMs/)
 
+## HOW TO
+It is not end-to-end complete. You need to download the pretrained embedding for better performance. and create a directory in ../data to store the checkpoint file. But in essence, once all set up, you do either.
+1. Train.
+
+   ```python
+   python train.py
+   ```
+
+2. Predict
+
+   ```python
+   python train.py --predict
+   ```
+
+###
+
 ## TODO
 1. ~~Training~~
 2. Variable length LSTM. (Currently use 0 padding to the max len)
