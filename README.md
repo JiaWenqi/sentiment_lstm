@@ -12,6 +12,7 @@ Implementation of _not exactly_ [this tutorial](http://deeplearning.net/tutorial
 
 ## HOW TO
 It is not end-to-end complete. You need to download the pretrained embedding for better performance. and create a directory in ../data to store the checkpoint file. But in essence, once all set up, you do either.
+
 1. Train.
 
    ```python
