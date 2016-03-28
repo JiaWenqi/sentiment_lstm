@@ -52,7 +52,7 @@ def prepare_data(seqs, labels, maxlen=None):
   x = numpy.zeros((n_samples, maxlen)).astype('float32')
   labels_arr = numpy.zeros((n_samples,)).astype('float32')
   for idx, s in enumerate(seqs):
-    x[idx, :lengths[idx]] = s
+    x[idx, -(lengths[idx]):] = s
 
   for idx, l in enumerate(labels):
     labels_arr[idx] = l

@@ -143,18 +143,23 @@ class LSTM(object):
 
     return self.final_cell.h
 
-  def Loss(self, inference, label_placeholder):
+  def Loss(self, inference, label_placeholder, l2_regularization_weight):
     entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(inference,
                                                              label_placeholder)
-
     loss = tf.reduce_mean(entropy)
+    for v in tf.trainable_variables():
+      loss += l2_regularization_weight * tf.nn.l2_loss(v)
     return loss
 
-  def Train(self, loss, learning_rate):
+  def Train(self, loss, learning_rate, clip_value_min, clip_value_max):
     tf.scalar_summary(loss.op.name, loss)
     optimizer = tf.train.GradientDescentOptimizer(learning_rate)
-    global_step = tf.Variable(0, name='global_step', trainable=False)
-    train_op = optimizer.minimize(loss, global_step=global_step)
+    grads_and_vars = optimizer.compute_gradients(loss)
+    clipped_grads_and_vars = [
+        (tf.clip_by_value(g, clip_value_min, clip_value_max), v)
+        for g, v in grads_and_vars
+    ]
+    train_op = optimizer.apply_gradients(clipped_grads_and_vars)
 
     return train_op
 

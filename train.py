@@ -18,10 +18,13 @@ def main():
   batch_size = 100
   length = 150
   num_class = 2
-  learning_rate = 4.0
+  learning_rate = 5.0
   epochs = 100000
   voc_size = 100000
   emb_dim = 300
+  clip_value_min = -5.0
+  clip_value_max = 5.0
+  l2_regularization_wegith = 0.1**3
   pretrained_emb_path = '../data/imdb.emb.pkl'
   checkpoint_dir = './checkpoint'
   checkpoint_file = 'lstm'
@@ -57,8 +60,11 @@ def main():
                       num_class=num_class,
                       pretrained_emb=pretrained_emb)
     inference = lstm.Inference(x_placeholder)
-    loss = lstm.Loss(inference, label_placeholder)
-    train_op = lstm.Train(loss, learning_rate=learning_rate)
+    loss = lstm.Loss(inference, label_placeholder, l2_regularization_wegith)
+    train_op = lstm.Train(loss,
+                          learning_rate=learning_rate,
+                          clip_value_min=clip_value_min,
+                          clip_value_max=clip_value_max)
     evaluate = lstm.Evaluate(inference, label_placeholder)
 
     saver = tf.train.Saver(max_to_keep=10)

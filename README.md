@@ -35,10 +35,17 @@ It is not end-to-end complete. You need to download the pretrained embedding for
 5. ~~Reset h after each batch to zero~~
 6. ~~Fix exploding loss and nan loss.~~ (This is due to euclidean sqrt function derivative at 0 is nan, end up adding an eps)
 7. ~~Should at least use one hot vector to represent word, I doubt it is due to the large value that results in derivative to nan.~~ (Change to embedding)
-8. Regularization
+8. ~~Regularization~~ L2. If the weight is high, e.g. 0.1 then it doesn't train at all.
 9. Dropout
-10. padding to the front.
+10. ~~padding to the front.~~ It seems to train faster.
 11. ~~checkpointing the model.~~
+12. ~~Clip gradient.~~
+13. Weight decay.
+14. Bucketing.
+15. Hyper param tuning.
+16. Early stop
+17. Use get_variable
+18. Understand normalization.
 
 ## Open Question
 1. Should we train embedding on the corpse or use pretrained embedding from larger corpse?
@@ -63,3 +70,5 @@ test precision keeps ~50% before 207 iterations, and *weirdly* suddenly jumps to
 training precision jump at the same time from ~56% to 97%.
 
 I cannot explain why that happened.
+
+This result is not reproducible. In fact, it might be related to the initialization in a long stride. A few more runs shows the precision to peak around 65% and then have a sudden drop in precision and increase in cost.
