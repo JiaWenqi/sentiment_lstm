@@ -45,7 +45,8 @@ It is not end-to-end complete. You need to download the pretrained embedding for
 15. Hyper param tuning.
 16. Early stop
 17. Use get_variable
-18. Understand normalization.
+18. Understand initialization.
+19. units for C.
 
 ## Open Question
 1. Should we train embedding on the corpse or use pretrained embedding from larger corpse?
