@@ -42,11 +42,12 @@ It is not end-to-end complete. You need to download the pretrained embedding for
 12. ~~Clip gradient.~~
 13. Weight decay.
 14. Bucketing.
-15. Hyper param tuning.
+15. ~~manual Hyper param tuning.~~ It seems that state_size = 20 is good, but I haven't tried larger. learning_rate seems to be good below 0.01 for state_size = 20
 16. Early stop
 17. Use get_variable
 18. Understand initialization.
-19. units for C.
+19. ~~units for C.~~ Add a logistic regression layer for the last output.
+20. autotuning hyper param.
 
 ## Open Question
 1. Should we train embedding on the corpse or use pretrained embedding from larger corpse?
@@ -73,3 +74,26 @@ training precision jump at the same time from ~56% to 97%.
 I cannot explain why that happened.
 
 This result is not reproducible. In fact, it might be related to the initialization in a long stride. A few more runs shows the precision to peak around 65% and then have a sudden drop in precision and increase in cost.
+
+### Index based input with constant pretrained embedding, using the last output, softmax cross entropy loss, variable state size, add a last logistic regression layer to convert from h to logits.
+Keeping the following constant,
+length = 50
+batch_size = 5
+state_size = 10
+
+Tuning learning rate,
+learning_rate = 0.1 seems to be the fastest yet stable rate. Achieving 99.59% accuracy.
+
+However, there seems to be serious overfitting. The best validation accuracy achieved is 60%
+
+Keeping the following constant,
+length = 50
+batch_size = 5
+learning_rate = 0.1
+
+Tuning state_size,
+state_size = 10 is the fastest yet stable size.
+
+At state_size = 15, the overfitting seems better, achieving at best 80% validation accuracy.
+
+At state_size = 20, the overfitting seems even better, achieving a closer gap most of the time. However, at this state_size, learning_rate = 0.01 results in too larg step at around 80% training accuracy.

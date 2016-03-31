@@ -74,17 +74,19 @@ class LSTM(object):
                voc_size,
                emb_dim,
                num_class,
+               state_size,
                pretrained_emb=None):
     self.length = length
     self.batch_size = batch_size
     self.voc_size = voc_size
     self.emb_dim = emb_dim
     self.num_class = num_class
+    self.state_size = state_size
     self.pretrained_emb = pretrained_emb
 
   def Inference(self, x_placeholder):
-    h_init = tf.zeros([self.batch_size, self.num_class], name='h_t-1')
-    C_init = tf.zeros([self.batch_size, self.num_class], name='C_prev')
+    h_init = tf.zeros([self.batch_size, self.state_size], name='h_t-1')
+    C_init = tf.zeros([self.batch_size, self.state_size], name='C_prev')
     if self.pretrained_emb is not None:
       embedding = tf.constant(self.pretrained_emb, name='embedding')
     else:
@@ -92,29 +94,37 @@ class LSTM(object):
           tf.truncated_normal([self.voc_size, self.emb_dim]),
           name='embedding')
     W_f = tf.Variable(
-        tf.truncated_normal([self.num_class + self.emb_dim, self.num_class]),
+        tf.truncated_normal([self.state_size + self.emb_dim, self.state_size]),
         name='W_f')
     b_f = tf.Variable(
-        tf.truncated_normal([self.batch_size, self.num_class]),
+        tf.truncated_normal([self.batch_size, self.state_size]),
         name='b_f')
     W_i = tf.Variable(
-        tf.truncated_normal([self.num_class + self.emb_dim, self.num_class]),
+        tf.truncated_normal([self.state_size + self.emb_dim, self.state_size]),
         name='W_i')
     b_i = tf.Variable(
-        tf.truncated_normal([self.batch_size, self.num_class]),
+        tf.truncated_normal([self.batch_size, self.state_size]),
         name='b_i')
     W_C = tf.Variable(
-        tf.truncated_normal([self.num_class + self.emb_dim, self.num_class]),
+        tf.truncated_normal([self.state_size + self.emb_dim, self.state_size]),
         name='W_C')
     b_C = tf.Variable(
-        tf.truncated_normal([self.batch_size, self.num_class]),
+        tf.truncated_normal([self.batch_size, self.state_size]),
         name='b_C')
     W_o = tf.Variable(
-        tf.truncated_normal([self.num_class + self.emb_dim, self.num_class]),
+        tf.truncated_normal([self.state_size + self.emb_dim, self.state_size]),
         name='W_o')
     b_o = tf.Variable(
-        tf.truncated_normal([self.batch_size, self.num_class]),
+        tf.truncated_normal([self.batch_size, self.state_size]),
         name='b_o')
+
+    # logistic regression layer to convert from h to logits.
+    self.W_h = tf.Variable(
+        tf.truncated_normal([self.state_size, self.num_class]),
+        name='W_h')
+    self.b_h = tf.Variable(
+        tf.truncated_normal([self.batch_size, self.num_class]),
+        name='b_h')
 
     self.cell_list = []
     cell = LSTMCell(idx=0,
@@ -141,14 +151,16 @@ class LSTM(object):
 
     self.final_cell = self.cell_list[-1]
 
-    return self.final_cell.h
+    logits = tf.matmul(self.final_cell.h, self.W_h) + self.b_h
+
+    return logits
 
   def Loss(self, inference, label_placeholder, l2_regularization_weight):
     entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(inference,
                                                              label_placeholder)
-    loss = tf.reduce_mean(entropy)
-    for v in tf.trainable_variables():
-      loss += l2_regularization_weight * tf.nn.l2_loss(v)
+    loss = tf.reduce_sum(entropy)
+    # for v in tf.trainable_variables():
+    #   loss += l2_regularization_weight * tf.nn.l2_loss(v)
     return loss
 
   def Train(self, loss, learning_rate, clip_value_min, clip_value_max):
@@ -165,4 +177,4 @@ class LSTM(object):
 
   def Evaluate(self, inference, label_placeholder):
     correct = tf.nn.in_top_k(inference, label_placeholder, 1)
-    return tf.reduce_mean(tf.cast(correct, tf.float32))
+    return tf.reduce_sum(tf.cast(correct, tf.float32))

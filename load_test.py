@@ -43,9 +43,19 @@ class TestPrepareData(unittest.TestCase):
   def test_IntLabel(self):
     seqs = [[1, 2], [1, 2, 3, 4]]
     labels = [0, 1]
-    expected_x = np.array([[1, 2, 0, 0], [1, 2, 3, 4]])
+    expected_x = np.array([[0, 0, 1, 2], [1, 2, 3, 4]])
     expected_labels = np.array([0, 1])
     actual_x, actual_labels = load.prepare_data(seqs, labels)
+
+    np.testing.assert_array_equal(expected_x, actual_x)
+    np.testing.assert_array_equal(expected_labels, actual_labels)
+
+  def test_IntLabel_Truncate(self):
+    seqs = [[1, 2], [1, 2, 3, 4]]
+    labels = [0, 1]
+    expected_x = np.array([[0, 1, 2]])
+    expected_labels = np.array([0,])
+    actual_x, actual_labels = load.prepare_data(seqs, labels, maxlen=3)
 
     np.testing.assert_array_equal(expected_x, actual_x)
     np.testing.assert_array_equal(expected_labels, actual_labels)

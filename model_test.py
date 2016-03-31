@@ -11,6 +11,7 @@ class TestLSTM(unittest.TestCase):
     super(TestLSTM, self).__init__(*args, **kwargs)
     self.learning_rate = 0.001
     self.num_class = 2
+    self.state_size = 10
     self.pretrained_emb = None
 
   def tearDown(self):
@@ -28,10 +29,11 @@ class TestLSTM(unittest.TestCase):
                         voc_size=self.voc_size,
                         emb_dim=self.emb_dim,
                         num_class=self.num_class,
+                        state_size=self.state_size,
                         pretrained_emb=self.pretrained_emb)
       inference = lstm.Inference(x_placeholder)
-      loss = lstm.Loss(inference, label_placeholder)
-      train_op = lstm.Train(loss, learning_rate=self.learning_rate)
+      loss = lstm.Loss(inference, label_placeholder, 0.001)
+      train_op = lstm.Train(loss, self.learning_rate, -0.1, 0.1)
 
       feed_dict = {x_placeholder: self.x, label_placeholder: self.label}
       with tf.Session() as sess:
@@ -55,10 +57,11 @@ class TestLSTM(unittest.TestCase):
     self.batch_size = 3
     self.voc_size = 1000
     self.emb_dim = 100
+    self.state_size = 20
     self.x = [[1, 2, 3], [1, 2, 4], [1, 3, 4]]
     self.label = [1, 0, 1]
 
-  def test_multiple_row(self):
+  def test_multiple_row_pretrained_emb(self):
     self.length = 3
     self.batch_size = 3
     self.voc_size = 1000

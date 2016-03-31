@@ -47,7 +47,7 @@ def prepare_data(seqs, labels, maxlen=None):
       return None, None, None
 
   n_samples = len(seqs)
-  maxlen = numpy.max(lengths)
+  maxlen = maxlen or numpy.max(lengths)
 
   x = numpy.zeros((n_samples, maxlen)).astype('float32')
   labels_arr = numpy.zeros((n_samples,)).astype('float32')
