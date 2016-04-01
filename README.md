@@ -45,7 +45,7 @@ It is not end-to-end complete. You need to download the pretrained embedding for
 15. ~~manual Hyper param tuning.~~ It seems that state_size = 20 is good, but I haven't tried larger. learning_rate seems to be good below 0.01 for state_size = 20
 16. Early stop
 17. Use get_variable
-18. Understand initialization.
+18. ~~Understand initialization.~~ Initialize using math.sqrt(fan_in) for weights to sharpen the activation.
 19. ~~units for C.~~ Add a logistic regression layer for the last output.
 20. autotuning hyper param.
 
@@ -97,3 +97,10 @@ state_size = 10 is the fastest yet stable size.
 At state_size = 15, the overfitting seems better, achieving at best 80% validation accuracy.
 
 At state_size = 20, the overfitting seems even better, achieving a closer gap most of the time. However, at this state_size, learning_rate = 0.01 results in too larg step at around 80% training accuracy.
+
+Train on larger corpse, after about 15 hours,
+length = 150
+batch_size = 100
+learning_rate = 0.001
+state_size = 30
+training accuracy increase to 99.92%, validation accuracy to 73.17%, test accuracy to 73.66%

@@ -18,11 +18,11 @@ def main():
   batch_size = 100
   length = 150
   num_class = 2
-  learning_rate = 0.01
+  learning_rate = 0.001
   epochs = 100000
   voc_size = 100000
   emb_dim = 300
-  state_size = 20
+  state_size = 30
   clip_value_min = -5.0
   clip_value_max = 5.0
   l2_regularization_wegith = 0
@@ -77,7 +77,7 @@ def main():
         saver.restore(sess, tf.train.latest_checkpoint(checkpoint_dir))
         total_test_precision = Evaluate(sess, batch_size, test_x, test_labels,
                                         x_placeholder, label_placeholder,
-                                        evaluate)
+                                        evaluate, inference)
         print('test_precision = %2.2f' % (total_test_precision * 100.0))
       else:
         print('initializing all variables.')

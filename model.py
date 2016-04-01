@@ -1,3 +1,4 @@
+import math
 import sys
 import tensorflow as tf
 
@@ -94,25 +95,33 @@ class LSTM(object):
           tf.truncated_normal([self.voc_size, self.emb_dim]),
           name='embedding')
     W_f = tf.Variable(
-        tf.truncated_normal([self.state_size + self.emb_dim, self.state_size]),
+        tf.truncated_normal(
+            [self.state_size + self.emb_dim, self.state_size],
+            stddev=1.0 / math.sqrt(self.state_size + self.emb_dim)),
         name='W_f')
     b_f = tf.Variable(
         tf.truncated_normal([self.batch_size, self.state_size]),
         name='b_f')
     W_i = tf.Variable(
-        tf.truncated_normal([self.state_size + self.emb_dim, self.state_size]),
+        tf.truncated_normal(
+            [self.state_size + self.emb_dim, self.state_size],
+            stddev=1.0 / math.sqrt(self.state_size + self.emb_dim)),
         name='W_i')
     b_i = tf.Variable(
         tf.truncated_normal([self.batch_size, self.state_size]),
         name='b_i')
     W_C = tf.Variable(
-        tf.truncated_normal([self.state_size + self.emb_dim, self.state_size]),
+        tf.truncated_normal(
+            [self.state_size + self.emb_dim, self.state_size],
+            stddev=1.0 / math.sqrt(self.state_size + self.emb_dim)),
         name='W_C')
     b_C = tf.Variable(
         tf.truncated_normal([self.batch_size, self.state_size]),
         name='b_C')
     W_o = tf.Variable(
-        tf.truncated_normal([self.state_size + self.emb_dim, self.state_size]),
+        tf.truncated_normal(
+            [self.state_size + self.emb_dim, self.state_size],
+            stddev=1.0 / math.sqrt(self.state_size + self.emb_dim)),
         name='W_o')
     b_o = tf.Variable(
         tf.truncated_normal([self.batch_size, self.state_size]),
@@ -120,7 +129,9 @@ class LSTM(object):
 
     # logistic regression layer to convert from h to logits.
     self.W_h = tf.Variable(
-        tf.truncated_normal([self.state_size, self.num_class]),
+        tf.truncated_normal(
+            [self.state_size, self.num_class],
+            stddev=1.0 / math.sqrt(self.state_size)),
         name='W_h')
     self.b_h = tf.Variable(
         tf.truncated_normal([self.batch_size, self.num_class]),
