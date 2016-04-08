@@ -10,6 +10,7 @@ class TestLSTM(unittest.TestCase):
   def __init__(self, *args, **kwargs):
     super(TestLSTM, self).__init__(*args, **kwargs)
     self.learning_rate = 0.001
+    self.keep_prob = 0.5
     self.num_class = 2
     self.state_size = 10
     self.pretrained_emb = None
@@ -28,6 +29,7 @@ class TestLSTM(unittest.TestCase):
                         batch_size=self.batch_size,
                         voc_size=self.voc_size,
                         emb_dim=self.emb_dim,
+                        keep_prob=self.keep_prob,
                         num_class=self.num_class,
                         state_size=self.state_size,
                         pretrained_emb=self.pretrained_emb)

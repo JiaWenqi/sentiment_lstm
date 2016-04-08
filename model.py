@@ -6,42 +6,41 @@ import tensorflow as tf
 class LSTMCell(object):
   """A single LSTM cell."""
 
-  def __init__(self, idx, batch_size, emb_dim, x_placeholder, h_prev, C_prev,
-               embedding, W_f, b_f, W_i, b_i, W_C, b_C, W_o, b_o):
+  def __init__(self, idx, batch_size, emb_dim, keep_prob, x_placeholder, h_prev,
+               C_prev, embedding, W_f, W_i, W_C, W_o):
     self.idx = idx
     self.batch_size = batch_size
     self.emb_dim = emb_dim
+    self.keep_prob = keep_prob
     self.x_placeholder = x_placeholder
     self.h_prev = h_prev
     self.C_prev = C_prev
     self.embedding = embedding
     self.W_f = W_f
-    self.b_f = b_f
     self.W_i = W_i
-    self.b_i = b_i
     self.W_C = W_C
-    self.b_C = b_C
     self.W_o = W_o
-    self.b_o = b_o
 
     x_embedding = tf.nn.embedding_lookup(self.embedding,
                                          self.x_placeholder[:, idx])
 
     # forget gate
     concat_input = tf.concat(1, [self.h_prev, x_embedding])
-    f = tf.sigmoid(tf.matmul(concat_input, self.W_f) + self.b_f)
+    f = tf.sigmoid(tf.matmul(concat_input, self.W_f))
 
     # input gate
-    i = tf.sigmoid(tf.matmul(concat_input, self.W_i) + self.b_i)
+    i = tf.sigmoid(tf.matmul(concat_input, self.W_i))
 
     # cell update
-    C_update = tf.tanh(tf.matmul(concat_input, self.W_C) + self.b_C)
+    C_update = tf.tanh(tf.matmul(concat_input, self.W_C))
 
     # cell after update
-    self.C = tf.mul(f, self.C_prev) + tf.mul(i, C_update)
+    # Add a dropout layer.
+    self.C = tf.nn.dropout(
+        tf.mul(f, self.C_prev) + tf.mul(i, C_update), self.keep_prob)
 
     # output gate
-    o = tf.sigmoid(tf.matmul(concat_input, self.W_o) + self.b_o)
+    o = tf.sigmoid(tf.matmul(concat_input, self.W_o))
 
     # output
     self.h = tf.mul(o, tf.tanh(self.C))
@@ -52,18 +51,15 @@ class LSTMCell(object):
     return LSTMCell(idx=self.idx + 1,
                     batch_size=self.batch_size,
                     emb_dim=self.emb_dim,
+                    keep_prob=self.keep_prob,
                     x_placeholder=self.x_placeholder,
                     h_prev=self.h,
                     C_prev=self.C,
                     embedding=self.embedding,
                     W_f=self.W_f,
-                    b_f=self.b_f,
                     W_i=self.W_i,
-                    b_i=self.b_i,
                     W_C=self.W_C,
-                    b_C=self.b_C,
-                    W_o=self.W_o,
-                    b_o=self.b_o)
+                    W_o=self.W_o)
 
 
 class LSTM(object):
@@ -74,6 +70,7 @@ class LSTM(object):
                batch_size,
                voc_size,
                emb_dim,
+               keep_prob,
                num_class,
                state_size,
                pretrained_emb=None):
@@ -81,6 +78,7 @@ class LSTM(object):
     self.batch_size = batch_size
     self.voc_size = voc_size
     self.emb_dim = emb_dim
+    self.keep_prob = keep_prob
     self.num_class = num_class
     self.state_size = state_size
     self.pretrained_emb = pretrained_emb
@@ -99,33 +97,21 @@ class LSTM(object):
             [self.state_size + self.emb_dim, self.state_size],
             stddev=1.0 / math.sqrt(self.state_size + self.emb_dim)),
         name='W_f')
-    b_f = tf.Variable(
-        tf.truncated_normal([self.batch_size, self.state_size]),
-        name='b_f')
     W_i = tf.Variable(
         tf.truncated_normal(
             [self.state_size + self.emb_dim, self.state_size],
             stddev=1.0 / math.sqrt(self.state_size + self.emb_dim)),
         name='W_i')
-    b_i = tf.Variable(
-        tf.truncated_normal([self.batch_size, self.state_size]),
-        name='b_i')
     W_C = tf.Variable(
         tf.truncated_normal(
             [self.state_size + self.emb_dim, self.state_size],
             stddev=1.0 / math.sqrt(self.state_size + self.emb_dim)),
         name='W_C')
-    b_C = tf.Variable(
-        tf.truncated_normal([self.batch_size, self.state_size]),
-        name='b_C')
     W_o = tf.Variable(
         tf.truncated_normal(
             [self.state_size + self.emb_dim, self.state_size],
             stddev=1.0 / math.sqrt(self.state_size + self.emb_dim)),
         name='W_o')
-    b_o = tf.Variable(
-        tf.truncated_normal([self.batch_size, self.state_size]),
-        name='b_o')
 
     # logistic regression layer to convert from h to logits.
     self.W_h = tf.Variable(
@@ -133,26 +119,26 @@ class LSTM(object):
             [self.state_size, self.num_class],
             stddev=1.0 / math.sqrt(self.state_size)),
         name='W_h')
-    self.b_h = tf.Variable(
-        tf.truncated_normal([self.batch_size, self.num_class]),
-        name='b_h')
+
+    _ = tf.histogram_summary('W_forget', W_f)
+    _ = tf.histogram_summary('W_input', W_i)
+    _ = tf.histogram_summary('W_output', W_o)
+    _ = tf.histogram_summary('W_classify', self.W_h)
 
     self.cell_list = []
+
     cell = LSTMCell(idx=0,
                     batch_size=self.batch_size,
                     emb_dim=self.emb_dim,
+                    keep_prob=self.keep_prob,
                     x_placeholder=x_placeholder,
                     h_prev=h_init,
                     C_prev=C_init,
                     embedding=embedding,
                     W_f=W_f,
-                    b_f=b_f,
                     W_i=W_i,
-                    b_i=b_i,
                     W_C=W_C,
-                    b_C=b_C,
-                    W_o=W_o,
-                    b_o=b_o)
+                    W_o=W_o)
 
     self.cell_list.append(cell)
 
@@ -161,8 +147,10 @@ class LSTM(object):
       self.cell_list.append(cell)
 
     self.final_cell = self.cell_list[-1]
+    # self.mean_h = tf.reduce_mean(
+    #     tf.pack([cell.h for cell in self.cell_list]), 0)
 
-    logits = tf.matmul(self.final_cell.h, self.W_h) + self.b_h
+    logits = tf.matmul(self.final_cell.h, self.W_h)
 
     return logits
 
@@ -170,6 +158,8 @@ class LSTM(object):
     entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(inference,
                                                              label_placeholder)
     loss = tf.reduce_sum(entropy)
+
+    _ = tf.scalar_summary('softmax cross entropy loss', loss)
     # for v in tf.trainable_variables():
     #   loss += l2_regularization_weight * tf.nn.l2_loss(v)
     return loss
@@ -188,4 +178,6 @@ class LSTM(object):
 
   def Evaluate(self, inference, label_placeholder):
     correct = tf.nn.in_top_k(inference, label_placeholder, 1)
-    return tf.reduce_sum(tf.cast(correct, tf.float32))
+    accuracy = tf.reduce_sum(tf.cast(correct, tf.float32))
+    _ = tf.scalar_summary('accuracy', accuracy)
+    return accuracy

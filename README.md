@@ -104,3 +104,5 @@ batch_size = 100
 learning_rate = 0.001
 state_size = 30
 training accuracy increase to 99.92%, validation accuracy to 73.17%, test accuracy to 73.66%
+
+**Accuracy for different mini batch varies a lot.**
