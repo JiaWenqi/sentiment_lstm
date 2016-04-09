@@ -36,7 +36,7 @@ It is not end-to-end complete. You need to download the pretrained embedding for
 6. ~~Fix exploding loss and nan loss.~~ (This is due to euclidean sqrt function derivative at 0 is nan, end up adding an eps)
 7. ~~Should at least use one hot vector to represent word, I doubt it is due to the large value that results in derivative to nan.~~ (Change to embedding)
 8. ~~Regularization~~ L2. If the weight is high, e.g. 0.1 then it doesn't train at all.
-9. Dropout
+9. ~~Dropout~~. Helps with overfitting quite a bit.
 10. ~~padding to the front.~~ It seems to train faster.
 11. ~~checkpointing the model.~~
 12. ~~Clip gradient.~~
@@ -45,9 +45,11 @@ It is not end-to-end complete. You need to download the pretrained embedding for
 15. ~~manual Hyper param tuning.~~ It seems that state_size = 20 is good, but I haven't tried larger. learning_rate seems to be good below 0.01 for state_size = 20
 16. Early stop
 17. ~~Use get_variable.~~ Concatenate 4 gate weight into one as well.
-18. ~~Understand initialization.~~ Initialize using math.sqrt(fan_in) for weights to sharpen the activation.
+18. ~~Understand initialization.~~ Initialize using math.sqrt(fan_in) for weights to sharpen the activation. Orthognal initialization doesn't help the fluctuation between mini batches.
 19. ~~units for C.~~ Add a logistic regression layer for the last output.
 20. autotuning hyper param.
+21. GloVe vector.
+22. AdaOptmizer.
 
 ## Open Question
 1. Should we train embedding on the corpse or use pretrained embedding from larger corpse?

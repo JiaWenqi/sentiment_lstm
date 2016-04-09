@@ -1,6 +1,7 @@
 import math
 import sys
 import tensorflow as tf
+import numpy as np
 
 
 class LSTMCell(object):
@@ -67,6 +68,12 @@ class LSTM(object):
     def constant_embedding_initializer(shape=None, dtype=None):
       return self.pretrained_emb
 
+    def ortho_weight(shape=None, dtype=None):
+      dim = max(shape)
+      W = np.random.randn(dim, dim)
+      u, s, v = np.linalg.svd(W)
+      return v[:shape[0], :shape[1]].astype(np.float32)
+
     with tf.variable_scope(self.scope):
       if self.pretrained_emb is not None:
         embedding = tf.get_variable('embedding',
@@ -82,14 +89,13 @@ class LSTM(object):
       W = tf.get_variable(
           'weight',
           shape=[self.state_size + self.emb_dim, 4 * self.state_size],
-          initializer=tf.truncated_normal_initializer(stddev=1.0 / math.sqrt(
-              self.state_size + self.emb_dim)))
+          initializer=ortho_weight)
 
       # logistic regression layer to convert from h to logits.
       W_h = tf.get_variable('weight_softmax',
                             shape=[self.state_size, self.num_class],
                             initializer=tf.truncated_normal_initializer(
-                                stddev=1.0 / math.sqrt(self.state_size)))
+                                stddev=math.sqrt(6.0 / self.state_size)))
 
       h_init = tf.get_variable('h_init',
                                shape=[self.batch_size, self.state_size],
@@ -132,14 +138,15 @@ class LSTM(object):
     optimizer = tf.train.GradientDescentOptimizer(learning_rate)
     grads_and_vars = optimizer.compute_gradients(loss)
 
-    for g, v in grads_and_vars:
-      _ = tf.histogram_summary(v.name, v)
-      _ = tf.histogram_summary('gradient for %s' % v.name, g)
-
     clipped_grads_and_vars = [
         (tf.clip_by_value(g, clip_value_min, clip_value_max), v)
         for g, v in grads_and_vars
     ]
+
+    for g, v in clipped_grads_and_vars:
+      _ = tf.histogram_summary(v.name, v)
+      _ = tf.histogram_summary('gradient for %s' % v.name, g)
+
     train_op = optimizer.apply_gradients(clipped_grads_and_vars)
 
     return train_op
@@ -147,5 +154,5 @@ class LSTM(object):
   def Evaluate(self, inference, label_placeholder):
     correct = tf.nn.in_top_k(inference, label_placeholder, 1)
     accuracy = tf.reduce_sum(tf.cast(correct, tf.float32))
-    _ = tf.scalar_summary('accuracy', accuracy)
+    _ = tf.scalar_summary('accuracy', accuracy / self.batch_size * 100.0)
     return accuracy
