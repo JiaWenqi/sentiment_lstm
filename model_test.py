@@ -19,7 +19,7 @@ class TestLSTM(unittest.TestCase):
     with tf.Graph().as_default():
       x_placeholder = tf.placeholder(tf.int32,
                                      shape=[self.batch_size, self.length],
-                                     name='label')
+                                     name='x')
 
       label_placeholder = tf.placeholder(tf.int64,
                                          shape=[self.batch_size,],
@@ -45,6 +45,14 @@ class TestLSTM(unittest.TestCase):
 
         for i in range(10):
           _, loss_value = sess.run([train_op, loss], feed_dict=feed_dict)
+
+  def test_one_row_one_entry(self):
+    self.length = 1
+    self.batch_size = 1
+    self.voc_size = 1000
+    self.emb_dim = 5
+    self.x = [[1]]
+    self.label = [1]
 
   def test_one_row(self):
     self.length = 3

@@ -6,60 +6,38 @@ import tensorflow as tf
 class LSTMCell(object):
   """A single LSTM cell."""
 
-  def __init__(self, idx, batch_size, emb_dim, keep_prob, x_placeholder, h_prev,
-               C_prev, embedding, W_f, W_i, W_C, W_o):
-    self.idx = idx
-    self.batch_size = batch_size
-    self.emb_dim = emb_dim
+  def __init__(self, scope, keep_prob):
+    self.scope = scope
     self.keep_prob = keep_prob
-    self.x_placeholder = x_placeholder
-    self.h_prev = h_prev
-    self.C_prev = C_prev
-    self.embedding = embedding
-    self.W_f = W_f
-    self.W_i = W_i
-    self.W_C = W_C
-    self.W_o = W_o
 
-    x_embedding = tf.nn.embedding_lookup(self.embedding,
-                                         self.x_placeholder[:, idx])
+  def __call__(self, x_placeholder, h_prev, C_prev):
+    with tf.variable_scope(self.scope, reuse=True):
+      embedding = tf.get_variable('embedding')
+      W = tf.get_variable('weight')
+
+    x_embedding = tf.nn.embedding_lookup(embedding, x_placeholder)
 
     # forget gate
-    concat_input = tf.concat(1, [self.h_prev, x_embedding])
-    f = tf.sigmoid(tf.matmul(concat_input, self.W_f))
+    concat_input = tf.concat(1, [h_prev, x_embedding])
+    gates = tf.matmul(concat_input, W)
+    m_f, m_i, m_C_update, m_o = tf.split(1, 4, gates)
 
+    # forget gate
+    f = tf.sigmoid(m_f)
     # input gate
-    i = tf.sigmoid(tf.matmul(concat_input, self.W_i))
-
-    # cell update
-    C_update = tf.tanh(tf.matmul(concat_input, self.W_C))
+    i = tf.sigmoid(m_i)
+    # output gate
+    o = tf.sigmoid(m_o)
+    # Cell update
+    C_update = tf.tanh(m_C_update)
 
     # cell after update
     # Add a dropout layer.
-    self.C = tf.nn.dropout(
-        tf.mul(f, self.C_prev) + tf.mul(i, C_update), self.keep_prob)
-
-    # output gate
-    o = tf.sigmoid(tf.matmul(concat_input, self.W_o))
+    C = tf.nn.dropout(tf.mul(f, C_prev) + tf.mul(i, C_update), self.keep_prob)
 
     # output
-    self.h = tf.mul(o, tf.tanh(self.C))
-
-    self.concat_input = concat_input
-
-  def Next(self):
-    return LSTMCell(idx=self.idx + 1,
-                    batch_size=self.batch_size,
-                    emb_dim=self.emb_dim,
-                    keep_prob=self.keep_prob,
-                    x_placeholder=self.x_placeholder,
-                    h_prev=self.h,
-                    C_prev=self.C,
-                    embedding=self.embedding,
-                    W_f=self.W_f,
-                    W_i=self.W_i,
-                    W_C=self.W_C,
-                    W_o=self.W_o)
+    h = tf.mul(o, tf.tanh(C))
+    return h, C
 
 
 class LSTM(object):
@@ -82,75 +60,63 @@ class LSTM(object):
     self.num_class = num_class
     self.state_size = state_size
     self.pretrained_emb = pretrained_emb
+    self.scope = 'lstm'
 
   def Inference(self, x_placeholder):
-    h_init = tf.zeros([self.batch_size, self.state_size], name='h_t-1')
-    C_init = tf.zeros([self.batch_size, self.state_size], name='C_prev')
-    if self.pretrained_emb is not None:
-      embedding = tf.constant(self.pretrained_emb, name='embedding')
-    else:
-      embedding = tf.Variable(
-          tf.truncated_normal([self.voc_size, self.emb_dim]),
-          name='embedding')
-    W_f = tf.Variable(
-        tf.truncated_normal(
-            [self.state_size + self.emb_dim, self.state_size],
-            stddev=1.0 / math.sqrt(self.state_size + self.emb_dim)),
-        name='W_f')
-    W_i = tf.Variable(
-        tf.truncated_normal(
-            [self.state_size + self.emb_dim, self.state_size],
-            stddev=1.0 / math.sqrt(self.state_size + self.emb_dim)),
-        name='W_i')
-    W_C = tf.Variable(
-        tf.truncated_normal(
-            [self.state_size + self.emb_dim, self.state_size],
-            stddev=1.0 / math.sqrt(self.state_size + self.emb_dim)),
-        name='W_C')
-    W_o = tf.Variable(
-        tf.truncated_normal(
-            [self.state_size + self.emb_dim, self.state_size],
-            stddev=1.0 / math.sqrt(self.state_size + self.emb_dim)),
-        name='W_o')
 
-    # logistic regression layer to convert from h to logits.
-    self.W_h = tf.Variable(
-        tf.truncated_normal(
-            [self.state_size, self.num_class],
-            stddev=1.0 / math.sqrt(self.state_size)),
-        name='W_h')
+    def constant_embedding_initializer(shape=None, dtype=None):
+      return self.pretrained_emb
 
-    _ = tf.histogram_summary('W_forget', W_f)
-    _ = tf.histogram_summary('W_input', W_i)
-    _ = tf.histogram_summary('W_output', W_o)
-    _ = tf.histogram_summary('W_classify', self.W_h)
+    with tf.variable_scope(self.scope):
+      if self.pretrained_emb is not None:
+        embedding = tf.get_variable('embedding',
+                                    shape=[self.voc_size, self.emb_dim],
+                                    initializer=constant_embedding_initializer,
+                                    trainable=False)
+      else:
+        embedding = tf.get_variable(
+            'embedding',
+            shape=[self.voc_size, self.emb_dim],
+            initializer=tf.truncated_normal_initializer(stddev=0.01))
 
-    self.cell_list = []
+      W = tf.get_variable(
+          'weight',
+          shape=[self.state_size + self.emb_dim, 4 * self.state_size],
+          initializer=tf.truncated_normal_initializer(stddev=1.0 / math.sqrt(
+              self.state_size + self.emb_dim)))
 
-    cell = LSTMCell(idx=0,
-                    batch_size=self.batch_size,
-                    emb_dim=self.emb_dim,
-                    keep_prob=self.keep_prob,
-                    x_placeholder=x_placeholder,
-                    h_prev=h_init,
-                    C_prev=C_init,
-                    embedding=embedding,
-                    W_f=W_f,
-                    W_i=W_i,
-                    W_C=W_C,
-                    W_o=W_o)
+      # logistic regression layer to convert from h to logits.
+      W_h = tf.get_variable('weight_softmax',
+                            shape=[self.state_size, self.num_class],
+                            initializer=tf.truncated_normal_initializer(
+                                stddev=1.0 / math.sqrt(self.state_size)))
 
-    self.cell_list.append(cell)
+      h_init = tf.get_variable('h_init',
+                               shape=[self.batch_size, self.state_size],
+                               initializer=tf.constant_initializer(0.0),
+                               trainable=False)
+      C_init = tf.get_variable('C_init',
+                               shape=[self.batch_size, self.state_size],
+                               initializer=tf.constant_initializer(0.0),
+                               trainable=False)
 
-    for i in range(1, self.length):
-      cell = cell.Next()
-      self.cell_list.append(cell)
+      _ = tf.histogram_summary('Weight', W)
+      _ = tf.histogram_summary('Weight_softmax', W_h)
 
-    self.final_cell = self.cell_list[-1]
-    # self.mean_h = tf.reduce_mean(
-    #     tf.pack([cell.h for cell in self.cell_list]), 0)
+    cell = LSTMCell(scope=self.scope, keep_prob=self.keep_prob)
 
-    logits = tf.matmul(self.final_cell.h, self.W_h)
+    h_prev = h_init
+    C_prev = C_init
+
+    for i in range(self.length):
+      h_prev, C_prev = cell(x_placeholder=x_placeholder[:, i],
+                            h_prev=h_prev,
+                            C_prev=C_prev)
+
+      # self.mean_h = tf.reduce_mean(
+      #     tf.pack([cell.h for cell in self.cell_list]), 0)
+
+    logits = tf.matmul(h_prev, W_h)
 
     return logits
 

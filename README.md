@@ -44,7 +44,7 @@ It is not end-to-end complete. You need to download the pretrained embedding for
 14. Bucketing.
 15. ~~manual Hyper param tuning.~~ It seems that state_size = 20 is good, but I haven't tried larger. learning_rate seems to be good below 0.01 for state_size = 20
 16. Early stop
-17. Use get_variable
+17. ~~Use get_variable.~~ Concatenate 4 gate weight into one as well.
 18. ~~Understand initialization.~~ Initialize using math.sqrt(fan_in) for weights to sharpen the activation.
 19. ~~units for C.~~ Add a logistic regression layer for the last output.
 20. autotuning hyper param.
