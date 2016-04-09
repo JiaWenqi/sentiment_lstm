@@ -135,7 +135,7 @@ class LSTM(object):
 
   def Train(self, loss, learning_rate, clip_value_min, clip_value_max):
     tf.scalar_summary(loss.op.name, loss)
-    optimizer = tf.train.GradientDescentOptimizer(learning_rate)
+    optimizer = tf.train.AdagradOptimizer(learning_rate)
     grads_and_vars = optimizer.compute_gradients(loss)
 
     clipped_grads_and_vars = [

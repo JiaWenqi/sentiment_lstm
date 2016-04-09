@@ -7,8 +7,9 @@ Implementation of _not exactly_ [this tutorial](http://deeplearning.net/tutorial
 ## dataset
 [set 1](https://archive.ics.uci.edu/ml/)
 
-## LSTM tutorial
+## Reference
 [A nice tutorial](http://colah.github.io/posts/2015-08-Understanding-LSTMs/)
+[Visualize LSTM](http://arxiv.org/pdf/1506.02078v2.pdf)
 
 ## HOW TO
 It is not end-to-end complete. You need to download the pretrained embedding for better performance. and create a directory in ../data to store the checkpoint file. But in essence, once all set up, you do either.
@@ -49,7 +50,7 @@ It is not end-to-end complete. You need to download the pretrained embedding for
 19. ~~units for C.~~ Add a logistic regression layer for the last output.
 20. autotuning hyper param.
 21. GloVe vector.
-22. AdaOptmizer.
+22. ~~AdaOptmizer~~. AdaGrad greatly reduce the fluctuation.
 
 ## Open Question
 1. Should we train embedding on the corpse or use pretrained embedding from larger corpse?
@@ -108,3 +109,7 @@ state_size = 30
 training accuracy increase to 99.92%, validation accuracy to 73.17%, test accuracy to 73.66%
 
 **Accuracy for different mini batch varies a lot.**
+
+### replace SGD with AdaGrad
+clipping by +/-5.0
+After ~20 iterations, accuracy rose to 85%. The curve for accuracy looks asymptotic with reasonable volatility.

@@ -24,8 +24,8 @@ def main():
   voc_size = 100000
   emb_dim = 300
   state_size = 150
-  clip_value_min = -0.5
-  clip_value_max = 0.5
+  clip_value_min = -5.0
+  clip_value_max = 5.0
   l2_regularization_wegith = 0
   pretrained_emb_path = '../data/imdb.emb.pkl'
   checkpoint_dir = './checkpoint'
