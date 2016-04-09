@@ -100,9 +100,6 @@ class LSTM(object):
                                initializer=tf.constant_initializer(0.0),
                                trainable=False)
 
-      _ = tf.histogram_summary('Weight', W)
-      _ = tf.histogram_summary('Weight_softmax', W_h)
-
     cell = LSTMCell(scope=self.scope, keep_prob=self.keep_prob)
 
     h_prev = h_init
@@ -134,6 +131,11 @@ class LSTM(object):
     tf.scalar_summary(loss.op.name, loss)
     optimizer = tf.train.GradientDescentOptimizer(learning_rate)
     grads_and_vars = optimizer.compute_gradients(loss)
+
+    for g, v in grads_and_vars:
+      _ = tf.histogram_summary(v.name, v)
+      _ = tf.histogram_summary('gradient for %s' % v.name, g)
+
     clipped_grads_and_vars = [
         (tf.clip_by_value(g, clip_value_min, clip_value_max), v)
         for g, v in grads_and_vars
