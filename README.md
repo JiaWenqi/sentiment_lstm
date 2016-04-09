@@ -8,8 +8,8 @@ Implementation of _not exactly_ [this tutorial](http://deeplearning.net/tutorial
 [set 1](https://archive.ics.uci.edu/ml/)
 
 ## Reference
-[A nice tutorial](http://colah.github.io/posts/2015-08-Understanding-LSTMs/)
-[Visualize LSTM](http://arxiv.org/pdf/1506.02078v2.pdf)
+* [A nice tutorial](http://colah.github.io/posts/2015-08-Understanding-LSTMs/)
+* [Visualize LSTM](http://arxiv.org/pdf/1506.02078v2.pdf)
 
 ## HOW TO
 It is not end-to-end complete. You need to download the pretrained embedding for better performance. and create a directory in ../data to store the checkpoint file. But in essence, once all set up, you do either.
