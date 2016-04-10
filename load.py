@@ -186,3 +186,22 @@ def load_dictionary(path='../data/imdb.dict.pkl'):
   dictionary = pickle.load(f)
   f.close()
   return dictionary
+
+
+def load_dictionary_key_idx(path='../data/imdb.dict.pkl'):
+  # TODO(wenjie): download this file from 'http://www.iro.umontreal.ca/~lisa/deep/data/imdb.dict.pkl.gz'
+  f = open(path, 'r')
+  dictionary = pickle.load(f)
+  f.close()
+  result = {v: k for k, v in dictionary.items()}
+  return result
+
+
+def PrintSequence(dictionary, idx_seq):
+  return ' '.join([dictionary[int(idx)] for idx in idx_seq if idx not in [0, 1]
+                  ])
+
+
+def PrintSequenceSeq(dictionary, idx_seq_seq):
+  return '\n'.join([PrintSequence(dictionary, idx_seq) for idx_seq in
+                    idx_seq_seq])

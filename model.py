@@ -111,17 +111,21 @@ class LSTM(object):
     h_prev = h_init
     C_prev = C_init
 
+    cell_transition = tf.expand_dims(C_prev[14, :], 1)
+
     for i in range(self.length):
       h_prev, C_prev = cell(x_placeholder=x_placeholder[:, i],
                             h_prev=h_prev,
                             C_prev=C_prev)
+      cell_transition = tf.concat(1, [cell_transition,
+                                      tf.expand_dims(C_prev[14, :], 1)])
 
       # self.mean_h = tf.reduce_mean(
       #     tf.pack([cell.h for cell in self.cell_list]), 0)
 
     logits = tf.matmul(h_prev, W_h)
 
-    return logits
+    return logits, tf.tanh(cell_transition)
 
   def Loss(self, inference, label_placeholder, l2_regularization_weight):
     entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(inference,

@@ -10,6 +10,7 @@ Implementation of _not exactly_ [this tutorial](http://deeplearning.net/tutorial
 ## Reference
 * [A nice tutorial](http://colah.github.io/posts/2015-08-Understanding-LSTMs/)
 * [Visualize LSTM](http://arxiv.org/pdf/1506.02078v2.pdf)
+* [Data-driven document](https://d3js.org/)
 
 ## HOW TO
 It is not end-to-end complete. You need to download the pretrained embedding for better performance. and create a directory in ../data to store the checkpoint file. But in essence, once all set up, you do either.
@@ -51,6 +52,7 @@ It is not end-to-end complete. You need to download the pretrained embedding for
 20. autotuning hyper param.
 21. GloVe vector.
 22. ~~AdaOptmizer~~. AdaGrad greatly reduce the fluctuation.
+23. Color code the words for cell activation.
 
 ## Open Question
 1. Should we train embedding on the corpse or use pretrained embedding from larger corpse?
@@ -113,3 +115,6 @@ training accuracy increase to 99.92%, validation accuracy to 73.17%, test accura
 ### replace SGD with AdaGrad
 clipping by +/-5.0
 After ~20 iterations, accuracy rose to 85%. The curve for accuracy looks asymptotic with reasonable volatility.
+
+### Trace activation after each word update for each cell.
+Need to visualize them.

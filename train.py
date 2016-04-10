@@ -13,9 +13,12 @@ import argparse
 def main():
   parser = argparse.ArgumentParser()
   parser.add_argument('--predict', help='Prediction mode', action='store_true')
+  parser.add_argument('--analyze',
+                      help='Analyze LSTM cell',
+                      action='store_true')
   args = parser.parse_args()
 
-  batch_size = 200
+  batch_size = 20
   length = 150
   keep_prob = 1.0
   num_class = 2
@@ -31,6 +34,7 @@ def main():
   checkpoint_dir = './checkpoint'
   checkpoint_file = 'lstm'
 
+  dictionary = load.load_dictionary_key_idx()
   train, valid, test = load.load_data(n_words=voc_size)
   x, labels = load.prepare_data(train[0], train[1], maxlen=length)
   print('There are %d training cases.' % len(labels))
@@ -63,7 +67,7 @@ def main():
                       num_class=num_class,
                       state_size=state_size,
                       pretrained_emb=pretrained_emb)
-    inference = lstm.Inference(x_placeholder)
+    inference, cell_transition = lstm.Inference(x_placeholder)
     loss = lstm.Loss(inference, label_placeholder, l2_regularization_wegith)
     train_op = lstm.Train(loss,
                           learning_rate=learning_rate,
@@ -84,6 +88,28 @@ def main():
                                         x_placeholder, label_placeholder,
                                         evaluate, inference)
         print('test_precision = %2.2f' % (total_test_precision * 100.0))
+      elif args.analyze:
+        print('Analyzing LSTM cell.')
+        saver.restore(sess, tf.train.latest_checkpoint(checkpoint_dir))
+
+        batch_x, batch_label = load.NextMiniBatch(test_x, labels, 5, batch_size)
+        feed_dict = {x_placeholder: batch_x, label_placeholder: batch_label}
+        inference_value, cell_transition_value = sess.run(
+            [inference, cell_transition],
+            feed_dict=feed_dict)
+
+        idx = 14
+        seq = batch_x[idx]
+        label = batch_label[idx]
+        for i in range(len(seq)):
+          if seq[i] == 0:
+            effective_len = len(seq) - i - 1
+
+        print(load.PrintSequence(dictionary, seq))
+        print('label: %d' % label)
+        print('infered label: %r' % inference_value)
+        np.set_printoptions(threshold=np.nan)
+        print(cell_transition_value[:, -effective_len:])
       else:
         print('initializing all variables.')
 
