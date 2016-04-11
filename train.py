@@ -18,7 +18,7 @@ def main():
                       action='store_true')
   args = parser.parse_args()
 
-  batch_size = 20
+  batch_size = 100
   length = 150
   keep_prob = 1.0
   num_class = 2
@@ -31,6 +31,11 @@ def main():
   clip_value_max = 5.0
   l2_regularization_wegith = 0
   pretrained_emb_path = '../data/imdb.emb.pkl'
+
+  # Analysis.
+  sequence_file = 'sequence.csv'
+  activation_file = 'activation.csv'
+
   checkpoint_dir = './checkpoint'
   checkpoint_file = 'lstm'
 
@@ -98,18 +103,22 @@ def main():
             [inference, cell_transition],
             feed_dict=feed_dict)
 
-        idx = 14
+        idx = 83
         seq = batch_x[idx]
         label = batch_label[idx]
-        for i in range(len(seq)):
-          if seq[i] == 0:
-            effective_len = len(seq) - i - 1
 
-        print(load.PrintSequence(dictionary, seq))
+        # print(load.PrintSequence(dictionary, seq))
         print('label: %d' % label)
-        print('infered label: %r' % inference_value)
-        np.set_printoptions(threshold=np.nan)
-        print(cell_transition_value[:, -effective_len:])
+        print('infered label: %r' % inference_value[idx])
+        load.WriteSequenceToCSV(sequence_file, state_size, dictionary, seq)
+        print('sequences written to %s' % sequence_file)
+        np.savetxt(activation_file,
+                   np.asarray(cell_transition_value),
+                   delimiter=',')
+        print('activation written to %s' % activation_file)
+
+        # np.set_printoptions(threshold=np.nan)
+        # print(cell_transition_value[:,:])
       else:
         print('initializing all variables.')
 

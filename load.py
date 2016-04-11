@@ -3,6 +3,7 @@ from __future__ import print_function
 from six.moves import xrange
 import six.moves.cPickle as pickle
 
+import csv
 import gzip
 import os
 
@@ -198,10 +199,19 @@ def load_dictionary_key_idx(path='../data/imdb.dict.pkl'):
 
 
 def PrintSequence(dictionary, idx_seq):
-  return ' '.join([dictionary[int(idx)] for idx in idx_seq if idx not in [0, 1]
-                  ])
+  return ' '.join([dictionary[int(idx)] if idx not in [0, 1] else ''
+                   for idx in idx_seq])
 
 
 def PrintSequenceSeq(dictionary, idx_seq_seq):
   return '\n'.join([PrintSequence(dictionary, idx_seq) for idx_seq in
                     idx_seq_seq])
+
+
+def WriteSequenceToCSV(path, repeat, dictionary, idx_seq):
+  seq = [dictionary[int(idx)] if idx not in [0, 1] else '' for idx in idx_seq]
+  seq_seq = [seq for i in range(repeat)]
+
+  with open(path, 'w') as f:
+    writer = csv.writer(f)
+    writer.writerows(seq_seq)

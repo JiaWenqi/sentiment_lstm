@@ -27,7 +27,14 @@ It is not end-to-end complete. You need to download the pretrained embedding for
    python train.py --predict
    ```
 
-###
+3. Analyze
+
+   ```python
+   python train.py --analyze
+   python -m SimpleHTTPServer
+   ```
+
+   Go to [http://localhost:8000/test.html](http://localhost:8000/test.html) to view activation of each cell after reading each word.
 
 ## TODO
 1. ~~Training~~

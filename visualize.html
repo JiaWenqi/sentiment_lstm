@@ -1,0 +1,22 @@
+<script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+
+<body>
+</body>
+
+<script>
+  d3.text("http://localhost:8000/sequence.csv", function(d) {
+  var csv = d3.csv.parseRows(d);
+  var body = d3.selectAll("body");
+  var p = body.selectAll("p").data(csv).enter().append("p");
+  var sp = p.selectAll("span").data(function(word){ return word; }).enter().append("span").text(function(word){return word;}).style("margin-left", "5px");;
+  });
+  d3.text("http://localhost:8000/activation.csv", function(d) {
+  var csv = d3.csv.parseRows(d);
+  var body = d3.selectAll("body");
+  var p = body.selectAll("p").data(csv);
+  var color = d3.scale.linear()
+    .domain([-0.2, 0, 0.2])
+    .range(["red", "white", "green"]);
+  var sp = p.selectAll("span").data(function(word){ return word; }).style("background-color", function(d){return color(parseFloat(d));});
+  });
+</script>
