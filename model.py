@@ -159,4 +159,4 @@ class LSTM(object):
     correct = tf.nn.in_top_k(inference, label_placeholder, 1)
     accuracy = tf.reduce_sum(tf.cast(correct, tf.float32))
     _ = tf.scalar_summary('accuracy', accuracy / self.batch_size * 100.0)
-    return accuracy
+    return accuracy, correct

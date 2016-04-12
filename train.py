@@ -16,6 +16,12 @@ def main():
   parser.add_argument('--analyze',
                       help='Analyze LSTM cell',
                       action='store_true')
+  parser.add_argument('--error',
+                      help='Print error prediction',
+                      action='store_true')
+  parser.add_argument('--print_weight',
+                      help='Print softmax weight',
+                      action='store_true')
   args = parser.parse_args()
 
   batch_size = 100
@@ -78,7 +84,7 @@ def main():
                           learning_rate=learning_rate,
                           clip_value_min=clip_value_min,
                           clip_value_max=clip_value_max)
-    evaluate = lstm.Evaluate(inference, label_placeholder)
+    evaluate, correct = lstm.Evaluate(inference, label_placeholder)
 
     saver = tf.train.Saver(max_to_keep=10)
 
@@ -93,11 +99,45 @@ def main():
                                         x_placeholder, label_placeholder,
                                         evaluate, inference)
         print('test_precision = %2.2f' % (total_test_precision * 100.0))
+      elif args.error:
+        print('Print sequences with wrong prediction.')
+        saver.restore(sess, tf.train.latest_checkpoint(checkpoint_dir))
+
+        batch_x, batch_label = load.NextMiniBatch(test_x, test_labels, 5,
+                                                  batch_size)
+        feed_dict = {x_placeholder: batch_x, label_placeholder: batch_label}
+        correct_value = sess.run(correct, feed_dict=feed_dict)
+        print('len of batch: %d' % batch_x.shape[0])
+        print('\nFalse positive sequences.\n')
+        for idx in range(batch_label.shape[0]):
+          if int(batch_label[idx]) == 0 and int(correct_value[idx]) == 0:
+            print(load.PrintSequence(dictionary, batch_x[idx]))
+        print('\nFalse negative sequences.\n')
+        for idx in range(batch_label.shape[0]):
+          if int(batch_label[idx]) == 1 and int(correct_value[idx]) == 0:
+            print(load.PrintSequence(dictionary, batch_x[idx]))
+        print('\nTrue positive sequences.\n')
+        for idx in range(batch_label.shape[0]):
+          if int(batch_label[idx]) == 1 and int(correct_value[idx]) == 1:
+            print(load.PrintSequence(dictionary, batch_x[idx]))
+        print('\nTrue negative sequences.\n')
+        for idx in range(batch_label.shape[0]):
+          if int(batch_label[idx]) == 0 and int(correct_value[idx]) == 1:
+            print(load.PrintSequence(dictionary, batch_x[idx]))
+      elif args.print_weight:
+        print('Print weight.')
+        saver.restore(sess, tf.train.latest_checkpoint(checkpoint_dir))
+        with tf.variable_scope('lstm', reuse=True):
+          w_softmax = tf.get_variable('weight_softmax')
+          # np.set_printoptions(threshold=np.nan)
+          print(w_softmax.eval())
+          np.savetxt('w_softmax.csv', w_softmax.eval(), delimiter=',')
       elif args.analyze:
         print('Analyzing LSTM cell.')
         saver.restore(sess, tf.train.latest_checkpoint(checkpoint_dir))
 
-        batch_x, batch_label = load.NextMiniBatch(test_x, labels, 5, batch_size)
+        batch_x, batch_label = load.NextMiniBatch(test_x, test_labels, 5,
+                                                  batch_size)
         feed_dict = {x_placeholder: batch_x, label_placeholder: batch_label}
         inference_value, cell_transition_value = sess.run(
             [inference, cell_transition],
