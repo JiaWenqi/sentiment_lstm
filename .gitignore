@@ -66,3 +66,4 @@ target/
 checkpoint/*
 
 *.csv
+glove.840B.300d.txt

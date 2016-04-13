@@ -22,10 +22,11 @@ def main():
   parser.add_argument('--print_weight',
                       help='Print softmax weight',
                       action='store_true')
+  parser.add_argument('--emb', default='glove', type=str)
   args = parser.parse_args()
 
   batch_size = 100
-  length = 150
+  length = 100
   keep_prob = 1.0
   num_class = 2
   learning_rate = 0.005
@@ -36,7 +37,8 @@ def main():
   clip_value_min = -5.0
   clip_value_max = 5.0
   l2_regularization_wegith = 0
-  pretrained_emb_path = '../data/imdb.emb.pkl'
+  word_2_vec_emb_path = '../data/imdb.emb.pkl'
+  glove_vec_emb_path = '../data/imdb.glove.emb.pkl'
 
   # Analysis.
   sequence_file = 'sequence.csv'
@@ -52,14 +54,18 @@ def main():
   valid_x, valid_labels = load.prepare_data(valid[0], valid[1], maxlen=length)
   test_x, test_labels = load.prepare_data(test[0], test[1], maxlen=length)
 
-  if not os.path.isfile(pretrained_emb_path):
-    print(
-        'pretrained embedding does not exist, fall back to randomly initialized embedding.')
-    pretrained_emb = None
+  if args.emb == 'glove':
+    pretrained_emb_path = glove_vec_emb_path
+  elif args.emb == 'word2vec':
+    pretrained_emb_path = word_2_vec_emb_path
   else:
-    with open(pretrained_emb_path, 'r') as f:
-      pretrained_emb = pickle.load(f)
-    print('pretrained embedding loaded.')
+    print('--emb should be one of glove, word2vec')
+    exit(1)
+
+  print('Loading embedding from %s' % pretrained_emb_path)
+  with open(pretrained_emb_path, 'r') as f:
+    pretrained_emb = pickle.load(f)
+  print('pretrained embedding loaded.')
 
   with tf.Graph().as_default():
     x_placeholder = tf.placeholder(tf.int32,

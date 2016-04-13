@@ -59,7 +59,9 @@ It is not end-to-end complete. You need to download the pretrained embedding for
 20. autotuning hyper param.
 21. GloVe vector.
 22. ~~AdaOptmizer~~. AdaGrad greatly reduce the fluctuation.
-23. Color code the words for cell activation.
+23. ~~Color code the words for cell activation.~~
+24. interactive web service to do sentiment analysis.
+25. Preprocess special characters such as '
 
 ## Open Question
 1. Should we train embedding on the corpse or use pretrained embedding from larger corpse?
@@ -125,3 +127,15 @@ After ~20 iterations, accuracy rose to 85%. The curve for accuracy looks asympto
 
 ### Trace activation after each word update for each cell.
 Need to visualize them.
+
+### Replace word2vec with Glove vector(840B)
+with trivial preprocessing,
+70% of word has vector in Glove, while only 45% of word has vector in word2vec
+There is a boost in accuracy and learning speed using glove.
+
+length = 100
+batch_size = 100
+At epoch = 30
+Glove give ~95% training accuracy and 85% validation accuracy
+word2vec gives ~90% training accuracy and similar validation accuracy.
+
