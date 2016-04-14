@@ -11,6 +11,7 @@ Implementation of _not exactly_ [this tutorial](http://deeplearning.net/tutorial
 * [A nice tutorial](http://colah.github.io/posts/2015-08-Understanding-LSTMs/)
 * [Visualize LSTM](http://arxiv.org/pdf/1506.02078v2.pdf)
 * [Data-driven document](https://d3js.org/)
+* [Tokenizer](http://nlp.stanford.edu/software/tokenizer.shtml)
 
 ## HOW TO
 It is not end-to-end complete. You need to download the pretrained embedding for better performance. and create a directory in ../data to store the checkpoint file. But in essence, once all set up, you do either.
@@ -61,7 +62,7 @@ It is not end-to-end complete. You need to download the pretrained embedding for
 22. ~~AdaOptmizer~~. AdaGrad greatly reduce the fluctuation.
 23. ~~Color code the words for cell activation.~~
 24. interactive web service to do sentiment analysis.
-25. Preprocess special characters such as '
+25. ~~Preprocess special characters such as '~~. Use the same tokenizer as that for embedding.
 
 ## Open Question
 1. Should we train embedding on the corpse or use pretrained embedding from larger corpse?
@@ -139,3 +140,17 @@ At epoch = 30
 Glove give ~95% training accuracy and 85% validation accuracy
 word2vec gives ~90% training accuracy and similar validation accuracy.
 
+### Preprocess using Stanford parser
+Standford parse and one give [here](https://raw.githubusercontent.com/moses-smt/mosesdecoder/master/scripts/tokenizer/tokenizer.perl) differs on how *hasn't*, *won't*, etc is tokenized, *'t* is not in glove vector.
+Tokenizing results in many tokens that are not in the embedding, but should make sense to human, such as, *director/writer/main* *late-spring/summer*
+
+The accuracy after 30 epochs is similar to using the other parser, that is ~95% for training, and 85% for validation
+
+### Increase learning rate and loosen clipping.
+learning_rate = 0.05 (from 0.005)
+clip = +/-1000.0 (from +/-5.0, in real case, much gradients are capped by +/- 5.0, and are generally < +/- 80.0), so this has the same effect as no clipping.
+length = 100
+batch_size = 100
+
+After 17 iteration, training precision is 99.9%, validation precision is 82%. Model overfit.
+Aparrently, Adagrad doesn't require small clipping and learning_rate, and provide stability at the same time.

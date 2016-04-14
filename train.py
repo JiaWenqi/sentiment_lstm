@@ -29,13 +29,13 @@ def main():
   length = 100
   keep_prob = 1.0
   num_class = 2
-  learning_rate = 0.005
+  learning_rate = 0.05
   epochs = 100000
   voc_size = 100000
   emb_dim = 300
   state_size = 150
-  clip_value_min = -5.0
-  clip_value_max = 5.0
+  clip_value_min = -1000.0
+  clip_value_max = 1000.0
   l2_regularization_wegith = 0
   word_2_vec_emb_path = '../data/imdb.emb.pkl'
   glove_vec_emb_path = '../data/imdb.glove.emb.pkl'
