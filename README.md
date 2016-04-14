@@ -12,6 +12,7 @@ Implementation of _not exactly_ [this tutorial](http://deeplearning.net/tutorial
 * [Visualize LSTM](http://arxiv.org/pdf/1506.02078v2.pdf)
 * [Data-driven document](https://d3js.org/)
 * [Tokenizer](http://nlp.stanford.edu/software/tokenizer.shtml)
+* [CS224D report](https://cs224d.stanford.edu/reports/HongJames.pdf)
 
 ## HOW TO
 It is not end-to-end complete. You need to download the pretrained embedding for better performance. and create a directory in ../data to store the checkpoint file. But in essence, once all set up, you do either.
@@ -152,5 +153,5 @@ clip = +/-1000.0 (from +/-5.0, in real case, much gradients are capped by +/- 5.
 length = 100
 batch_size = 100
 
-After 17 iteration, training precision is 99.9%, validation precision is 82%. Model overfit.
+After 17 iteration, training precision is 99.9%, validation precision is 89%. Model overfit.
 Aparrently, Adagrad doesn't require small clipping and learning_rate, and provide stability at the same time.
