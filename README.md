@@ -13,6 +13,7 @@ Implementation of _not exactly_ [this tutorial](http://deeplearning.net/tutorial
 * [Data-driven document](https://d3js.org/)
 * [Tokenizer](http://nlp.stanford.edu/software/tokenizer.shtml)
 * [CS224D report](https://cs224d.stanford.edu/reports/HongJames.pdf)
+* [New book of Deep learning from Goodfellow etc.](http://www.deeplearningbook.org/contents/regularization.html)
 
 ## HOW TO
 It is not end-to-end complete. You need to download the pretrained embedding for better performance. and create a directory in ../data to store the checkpoint file. But in essence, once all set up, you do either.
