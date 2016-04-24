@@ -7,9 +7,10 @@ import numpy as np
 class LSTMCell(object):
   """A single LSTM cell."""
 
-  def __init__(self, scope, keep_prob):
+  def __init__(self, scope, keep_prob, is_training):
     self.scope = scope
     self.keep_prob = keep_prob
+    self.is_training = is_training
 
   def __call__(self, x_placeholder, h_prev, C_prev):
     with tf.variable_scope(self.scope, reuse=True):
@@ -17,6 +18,9 @@ class LSTMCell(object):
       W = tf.get_variable('weight')
 
     x_embedding = tf.nn.embedding_lookup(embedding, x_placeholder)
+
+    if self.is_training:
+      x_embedding = tf.nn.dropout(x_embedding, self.keep_prob)
 
     # forget gate
     concat_input = tf.concat(1, [h_prev, x_embedding])
@@ -34,7 +38,7 @@ class LSTMCell(object):
 
     # cell after update
     # Add a dropout layer.
-    C = tf.nn.dropout(tf.mul(f, C_prev) + tf.mul(i, C_update), self.keep_prob)
+    C = tf.mul(f, C_prev) + tf.mul(i, C_update)
 
     # output
     h = tf.mul(o, tf.tanh(C))
@@ -62,8 +66,6 @@ class LSTM(object):
     self.state_size = state_size
     self.pretrained_emb = pretrained_emb
     self.scope = 'lstm'
-
-  def Inference(self, x_placeholder):
 
     def constant_embedding_initializer(shape=None, dtype=None):
       return self.pretrained_emb
@@ -106,7 +108,20 @@ class LSTM(object):
                                initializer=tf.constant_initializer(0.0),
                                trainable=False)
 
-    cell = LSTMCell(scope=self.scope, keep_prob=self.keep_prob)
+  def Inference(self, x_placeholder, is_training=True):
+
+    cell = LSTMCell(scope=self.scope,
+                    keep_prob=self.keep_prob,
+                    is_training=is_training)
+
+    with tf.variable_scope(self.scope, reuse=True):
+      W_h = tf.get_variable('weight_softmax',
+                            shape=[self.state_size, self.num_class])
+
+      h_init = tf.get_variable('h_init',
+                               shape=[self.batch_size, self.state_size])
+      C_init = tf.get_variable('C_init',
+                               shape=[self.batch_size, self.state_size])
 
     h_prev = h_init
     C_prev = C_init
@@ -127,18 +142,27 @@ class LSTM(object):
 
     return logits, tf.tanh(cell_transition)
 
-  def Loss(self, inference, label_placeholder, l2_regularization_weight):
+  def Loss(self,
+           inference,
+           label_placeholder,
+           l2_regularization_weight,
+           name='training'):
     entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(inference,
                                                              label_placeholder)
     loss = tf.reduce_sum(entropy)
 
-    _ = tf.scalar_summary('softmax cross entropy loss', loss)
+    _ = tf.scalar_summary('%s: softmax cross entropy loss' % name, loss)
     # for v in tf.trainable_variables():
     #   loss += l2_regularization_weight * tf.nn.l2_loss(v)
     return loss
 
-  def Train(self, loss, learning_rate, clip_value_min, clip_value_max):
-    tf.scalar_summary(loss.op.name, loss)
+  def Train(self,
+            loss,
+            learning_rate,
+            clip_value_min,
+            clip_value_max,
+            name='training'):
+    tf.scalar_summary(':'.join([name, loss.op.name]), loss)
     optimizer = tf.train.AdagradOptimizer(learning_rate)
     grads_and_vars = optimizer.compute_gradients(loss)
 
@@ -148,15 +172,16 @@ class LSTM(object):
     ]
 
     for g, v in clipped_grads_and_vars:
-      _ = tf.histogram_summary(v.name, v)
-      _ = tf.histogram_summary('gradient for %s' % v.name, g)
+      _ = tf.histogram_summary(':'.join([name, v.name]), v)
+      _ = tf.histogram_summary('%s: gradient for %s' % (name, v.name), g)
 
     train_op = optimizer.apply_gradients(clipped_grads_and_vars)
 
     return train_op
 
-  def Evaluate(self, inference, label_placeholder):
+  def Evaluate(self, inference, label_placeholder, name='training'):
     correct = tf.nn.in_top_k(inference, label_placeholder, 1)
     accuracy = tf.reduce_sum(tf.cast(correct, tf.float32))
-    _ = tf.scalar_summary('accuracy', accuracy / self.batch_size * 100.0)
+    _ = tf.scalar_summary('%s: accuracy' % name,
+                          accuracy / self.batch_size * 100.0)
     return accuracy, correct

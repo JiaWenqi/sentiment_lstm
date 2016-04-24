@@ -27,13 +27,13 @@ def main():
 
   batch_size = 100
   length = 100
-  keep_prob = 1.0
+  keep_prob = 0.3
   num_class = 2
   learning_rate = 0.05
   epochs = 100000
   voc_size = 100000
   emb_dim = 300
-  state_size = 150
+  state_size = 300
   clip_value_min = -1000.0
   clip_value_max = 1000.0
   l2_regularization_wegith = 0
@@ -85,12 +85,22 @@ def main():
                       state_size=state_size,
                       pretrained_emb=pretrained_emb)
     inference, cell_transition = lstm.Inference(x_placeholder)
+    inference_validate, cell_transition_validate = lstm.Inference(
+        x_placeholder,
+        is_training=False)
     loss = lstm.Loss(inference, label_placeholder, l2_regularization_wegith)
+    loss_validate = lstm.Loss(inference_validate,
+                              label_placeholder,
+                              l2_regularization_wegith,
+                              name='validate')
     train_op = lstm.Train(loss,
                           learning_rate=learning_rate,
                           clip_value_min=clip_value_min,
                           clip_value_max=clip_value_max)
     evaluate, correct = lstm.Evaluate(inference, label_placeholder)
+    evaluate_validate, correct_validate = lstm.Evaluate(inference_validate,
+                                                        label_placeholder,
+                                                        name='validate')
 
     saver = tf.train.Saver(max_to_keep=10)
 
@@ -204,7 +214,7 @@ def main():
 
           total_valid_precision = Evaluate(
               sess, batch_size, valid_x, valid_labels, x_placeholder,
-              label_placeholder, evaluate, inference)
+              label_placeholder, evaluate_validate, inference_validate)
 
           total_train_precision = Evaluate(sess, batch_size, x, labels,
                                            x_placeholder, label_placeholder,

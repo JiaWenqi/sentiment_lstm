@@ -33,7 +33,7 @@ class TestLSTM(unittest.TestCase):
                         num_class=self.num_class,
                         state_size=self.state_size,
                         pretrained_emb=self.pretrained_emb)
-      inference = lstm.Inference(x_placeholder)
+      inference, _ = lstm.Inference(x_placeholder)
       loss = lstm.Loss(inference, label_placeholder, 0.001)
       train_op = lstm.Train(loss, self.learning_rate, -0.1, 0.1)
 
