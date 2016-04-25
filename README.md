@@ -156,3 +156,7 @@ batch_size = 100
 
 After 17 iteration, training precision is 99.9%, validation precision is 89%. Model overfit.
 Aparrently, Adagrad doesn't require small clipping and learning_rate, and provide stability at the same time.
+
+### Dropout to input
+Apply drop out to the input. Dropout set weight at w/p for input neurons that are not disabled. dropout = 0.5
+training overfit, but validation set max at 89%

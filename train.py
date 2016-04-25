@@ -27,7 +27,7 @@ def main():
 
   batch_size = 100
   length = 100
-  keep_prob = 0.3
+  keep_prob = 0.5
   num_class = 2
   learning_rate = 0.05
   epochs = 100000
