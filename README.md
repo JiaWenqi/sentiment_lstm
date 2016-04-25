@@ -60,7 +60,7 @@ It is not end-to-end complete. You need to download the pretrained embedding for
 18. ~~Understand initialization.~~ Initialize using math.sqrt(fan_in) for weights to sharpen the activation. Orthognal initialization doesn't help the fluctuation between mini batches.
 19. ~~units for C.~~ Add a logistic regression layer for the last output.
 20. autotuning hyper param.
-21. GloVe vector.
+21. ~~GloVe vector~~. Better coverage than word2vec.
 22. ~~AdaOptmizer~~. AdaGrad greatly reduce the fluctuation.
 23. ~~Color code the words for cell activation.~~
 24. interactive web service to do sentiment analysis.
