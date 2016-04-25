@@ -158,5 +158,8 @@ After 17 iteration, training precision is 99.9%, validation precision is 89%. Mo
 Aparrently, Adagrad doesn't require small clipping and learning_rate, and provide stability at the same time.
 
 ### Dropout to input
-Apply drop out to the input. Dropout set weight at w/p for input neurons that are not disabled. dropout = 0.5
-training overfit, but validation set max at 89%
+Apply drop out to the input. Dropout set weight at w/p for input neurons that are not disabled. dropout = 0.5, hidden_unit = 150
+dropout = 0.5, hidden_unit = 100 => validation accuracy = 94%
+dropout = 1.0, hidden_unit = 50 => validation accuracy ~90%
+
+Dropout helps reduce the overfit quite a bit.

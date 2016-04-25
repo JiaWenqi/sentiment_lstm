@@ -33,7 +33,7 @@ def main():
   epochs = 100000
   voc_size = 100000
   emb_dim = 300
-  state_size = 300
+  state_size = 100
   clip_value_min = -1000.0
   clip_value_max = 1000.0
   l2_regularization_wegith = 0
