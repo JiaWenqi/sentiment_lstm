@@ -26,7 +26,7 @@ def main():
   args = parser.parse_args()
 
   batch_size = 100
-  length = 100
+  length = 250
   keep_prob = 0.5
   num_class = 2
   learning_rate = 0.05
@@ -113,7 +113,7 @@ def main():
         saver.restore(sess, tf.train.latest_checkpoint(checkpoint_dir))
         total_test_precision = Evaluate(sess, batch_size, test_x, test_labels,
                                         x_placeholder, label_placeholder,
-                                        evaluate, inference)
+                                        evaluate_validate, inference_validate)
         print('test_precision = %2.2f' % (total_test_precision * 100.0))
       elif args.error:
         print('Print sequences with wrong prediction.')
@@ -122,7 +122,7 @@ def main():
         batch_x, batch_label = load.NextMiniBatch(test_x, test_labels, 5,
                                                   batch_size)
         feed_dict = {x_placeholder: batch_x, label_placeholder: batch_label}
-        correct_value = sess.run(correct, feed_dict=feed_dict)
+        correct_value = sess.run(correct_validate, feed_dict=feed_dict)
         print('len of batch: %d' % batch_x.shape[0])
         print('\nFalse positive sequences.\n')
         for idx in range(batch_label.shape[0]):
@@ -156,7 +156,7 @@ def main():
                                                   batch_size)
         feed_dict = {x_placeholder: batch_x, label_placeholder: batch_label}
         inference_value, cell_transition_value = sess.run(
-            [inference, cell_transition],
+            [inference_validate, cell_transition_validate],
             feed_dict=feed_dict)
 
         idx = 83
